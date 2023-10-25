@@ -31,8 +31,11 @@ edf = DataFrame(error)
 
 edf = edf.set_index(arange(1.5,12.5))
 
+
+pcys.right_feecback(2,0.5)
+
 plt.plot(edf)
-plt.xticks(arange(1.5,12.6))
+plt.xticks(arange(1.5,20.6))
 plt.yticks(arange(0,0.045,0.005))
 plt.grid()
 plt.show()
