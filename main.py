@@ -6,6 +6,7 @@ Created on Tue Oct 24 21:26:47 2023
 """
 
 from pci import PCI
+import error as err
 from pandas import read_csv
 from pandas import DataFrame, Series
 
@@ -17,25 +18,13 @@ df : DataFrame = read_csv("C:\\Users\\alvar\\OneDrive\\Desktop\\Stg\\Projects\\P
 
 pcys = PCI(df)
 
-pdct = [pcys.predict(val) for val in arange(1.5,12.5)]
+val_range = arange(9,12,0.5)
 
-pdct = array(pdct)
-
-real_data = [sin(val) for val in arange(1.5,12.5)]
-
-real_data = array(real_data)
-
-error = abs((real_data-pdct)/real_data)*100
-
-edf = DataFrame(error)
-
-edf = edf.set_index(arange(1.5,12.5))
-
+edf = err.error_to_plot(pcys, sin,val_range)
 
 pcys.right_feecback(2,0.5)
 
 plt.plot(edf)
-plt.xticks(arange(1.5,20.6))
-plt.yticks(arange(0,0.045,0.005))
+plt.xticks(val_range,fontsize=7)
 plt.grid()
 plt.show()

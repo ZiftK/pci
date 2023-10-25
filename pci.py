@@ -50,15 +50,7 @@ class PCI:
         
         return sum(pdct)
     
-    def right_feecback(self, iters : int, steps = 1):
-        
-        #get last row
-        lr = self.__df.iloc[-1]
-        
-        for i in arange(0,iters,steps):
-            self.__df.add({"x":lr["x"]+i,"y":self.predict(lr["x"]+i)})
-        pass
-        
+ 
     
 
 if __name__ == "__main__":
