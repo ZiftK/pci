@@ -18,12 +18,12 @@ df : DataFrame = read_csv("C:\\Users\\alvar\\OneDrive\\Desktop\\Stg\\Projects\\P
 
 pcys = PCI(df)
 
-val_range = arange(9,12,0.01)
-graph_range = arange(9,12,0.1)
+val_range = arange(10,11.5,0.01)
+graph_range = arange(10,11.5,0.1)
 
 edf = err.error_to_plot(pcys, sin,val_range)
 
 plt.plot(edf)
-plt.xticks(graph_range,fontsize=0)
+plt.xticks(graph_range,fontsize=5)
 plt.grid(axis="y")
 plt.show()
