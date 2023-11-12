@@ -348,7 +348,6 @@ class PCI:
 
         # apply polinomial function [a_1, a_2, a_3, ... , a_n]*[value**(n-1),value**(n-2), ... , value**1, value**0]
         # and sum all monomial
-        print(f"------------------{point**self.__exp}")
         pdct = self.__coefficients*(point**self.__exp)
         
         return sum(pdct)
