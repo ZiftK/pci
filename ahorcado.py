@@ -59,5 +59,5 @@ def ahorcado():
 
 if __name__ == "__main__":
     
-    print("paralelo"[3])
+    ahorcado()
     pass

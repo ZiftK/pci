@@ -314,7 +314,7 @@ class PCI:
 
         #inflog: coefficients cleaned
         self.__log.info("Coefficients cleaned")
- 
+
     
     #hd: User methods
 
