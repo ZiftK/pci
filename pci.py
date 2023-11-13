@@ -8,6 +8,7 @@ Created on Mon Oct 23 17:14:46 2023
 
 import pandas as pd
 import logging as lg
+import aop 
 
 from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 
@@ -82,6 +83,9 @@ class PCI:
         #  degree (n-1). The exponents are stored in a numpy array because all operations will be_
         # performed using arrays
         self.__exp = None
+
+        self.__tst = None
+        self.__tst2 = None
         
         pass
     
@@ -114,7 +118,7 @@ class PCI:
         self.__log.info("Calculating exponents...")
 
         #calculate exponents
-        self.__exp = array([n for n in range(0,degree)])
+        self.__exp = [n for n in range(0,degree)]
 
         #deblog: calculated as
         self.__log.info(f"Exponents setted as {self.__exp}")
@@ -130,20 +134,27 @@ class PCI:
         #TODO: Falta considerar el desorden de un data frame para asignar los límites del rango estático
         self.__log.info("Calculating static limits...\n\n")
 
-        self.__li = self.__df["x"][0]   #lower limit
-        self.__ls = self.__df["x"][len(self.__df)-1] #upper limit
+        self.__li = 0   #lower limit
+        self.__ls = len(self.__df)-1#upper limit
         pass
 
     def __calc_effective_limits(self,point):
         '''
         Calculate effective limits on data
         '''
-
+        
+        #get point near value (pivot)
+        cp = self.df_near_val(point)
+        
         #inflog: calculating effective limits
-        self.__log.info(f"Calculating effective limits using -- {point} -- as central point")
+        self.__log.info(f"Calculating effective limits using -- {cp} -- as central point")
+        
+        #get cp index
+        cp_index = self.df_get_index(cp)
+        
 
-        self.__ci = self.__df_near_val(point - self.__offset/2) #lower limit
-        self.__cs = self.__df_near_val(point + self.__offset/2+0.1) #upper limit
+        self.__ci = max(cp_index-self.__offset,self.__li) #lower limit
+        self.__cs = min(cp_index+self.__offset,self.__ls) #upper limit
 
         #deblog: log ci and cs
         self.__log.debug(f"Set ci as {self.__ci} and cs as {self.__cs}")
@@ -159,19 +170,6 @@ class PCI:
         #TODO: add dynamic limits
         pass
 
-    def __df_near_val(self,x):
-        '''
-        Get the near value to x in to internal data frame
-        
-        Parameters
-        ----------
-        x -> value to search
-        
-        Returns
-        --------
-        Near value to x param
-        '''
-        return self.__df['x'].iloc[(self.__df['x'] - x).abs().idxmin()]
 
     def __calc_effective_df(self):
         '''
@@ -180,37 +178,17 @@ class PCI:
         
         self.__log.info("Calculating effective data frame...")
 
-        #* Get ci index
-
-        #inflog: get ci index
-        self.__log.info("Getting Ci index")
-
-        # get ci index list
-        ci_indx = self.__df.index[self.__df['x'] == self.__ci]
-        # get first ci index
-        ci_indx = ci_indx[0]
-
         #deblog: print ci index
-        self.__log.debug(f"Ci index set as {ci_indx}")  
-
-        #* Get cl index
-
-        #inflog: get cs index
-        self.__log.info("Gettin Cs index") 
-
-        #get cl index list
-        cs_indx = self.__df.index[self.__df["x"] == self.__cs]+1
-        # get first cl index
-        cs_indx = cs_indx[0]
+        self.__log.debug(f"Ci index set as {self.__ci}")  
 
         #deblog: print cs index
-        self.__log.debug(f"Cs index set as {cs_indx}")  
+        self.__log.debug(f"Cs index set as {self.__cs}")  
 
         #inflog: setting effective data frame
         self.__log.info("Setting effective data frame")
 
         # get effective range as data frame
-        edf = self.__df.sort_values(by="x")[ci_indx:cs_indx]
+        edf = self.__df.sort_values(by="x")[self.__ci:self.__cs]
 
         # if data frame is empty (effective range outside static range)
         if edf.empty:
@@ -221,7 +199,7 @@ class PCI:
             # extrapolation
             raise Exception(
                 "Extrapolation exception. Value out of range",
-                f"Ci_index: {ci_indx} - Cl_index: {cs_indx}"
+                f"Ci_index: {self.__ci} - Cl_index: {self.__cs}"
                 )
         
         else:
@@ -232,8 +210,7 @@ class PCI:
             #inflog: effective data frame setted
             self.__log.info("Effective data frame setted\n\n")
 
-        # del index
-        del cs_indx, ci_indx
+    
 
         # calc exponents
         self.__calc_exp(len(self.__edf))
@@ -257,13 +234,19 @@ class PCI:
         self.__log.info("Adjusting lines")
         # evaluate each x value into each matrix function line
         for x in self.__edf["x"]:
-            m.append(x**self.__exp)
+            m.append(aop.valpow(  x,self.__exp))
         
+        #deblog: show pows
+        self.__log.debug(f"\nPows: {m}\n")
+
         #inflog: solving
         self.__log.info("Solving")
 
+        self.__tst = m
         # ______ SOLVE ______
         m = matrix(m)
+        
+        self.__tst2 = m
 
         #deblog: print solve matrix
         self.__log.debug(f"Matrix : {m.shape[0]},{m.shape[1]} \n Extention: {len(self.__edf['y'])}")
@@ -324,7 +307,6 @@ class PCI:
         '''
         self = PCI(df)
         
-        
     def predict(self,point):
         '''
         Get predict value to specific parameters
@@ -348,10 +330,36 @@ class PCI:
 
         # apply polinomial function [a_1, a_2, a_3, ... , a_n]*[value**(n-1),value**(n-2), ... , value**1, value**0]
         # and sum all monomial
-        pdct = self.__coefficients*(point**self.__exp)
+
+        a = aop.valpow(float(point),self.__exp)
+
+        pdct = aop.amult(self.__coefficients,a)
         
         return sum(pdct)
     
+    def df_near_val(self,x):
+        '''
+        Get the near value to x in to internal data frame
+        
+        Parameters
+        ----------
+        x -> value to search
+        
+        Returns
+        --------
+        Near value to x param
+        '''
+        return self.__df['x'].iloc[(self.__df['x'] - x).abs().idxmin()]
+
+    def df_get_index(self,x):
+        '''
+        
+        '''
+        return self.__df.index[self.__df['x'] == x][0
+                                                    
+                                                    
+                                                    ]
+        
     def __str__(self):
         '''
         String object representation

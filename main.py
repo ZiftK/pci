@@ -17,13 +17,14 @@ import matplotlib.pyplot as plt
 def cuac(x):
     return x**2
 
-df : DataFrame = read_csv("C:\\Users\\ZiftK\\Desktop\\TODO\\Python\\pci\\csvs\\sin2.csv")
+#df : DataFrame = read_csv("C:\\Users\\ZiftK\\Desktop\\TODO\\Python\\pci\\csvs\\sin.csv")
 
-#df = DataFrame({"x":arange(1,6),"y":[x**2 for x in range(1,6)]})
+
+
 pcys = PCI(df,30)
 
-val_range = arange(1,9,0.01)
-graph_range = arange(1,9,0.5)
+val_range = arange(10,11.5,0.01)
+graph_range = arange(10,11.5,0.1)
 
 edf = err.error_to_plot(pcys, sin,val_range)
 
