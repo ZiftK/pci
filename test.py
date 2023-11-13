@@ -16,14 +16,19 @@ import error as er
 def cuac(x):
     return x**2
 
-df = pd.read_csv("C:\\Users\\ZiftK\\Desktop\\TODO\\Python\\pci\\csvs\\sin.csv")
+#df = pd.read_csv("C:\\Users\\ZiftK\\Desktop\\TODO\\Python\\pci\\csvs\\sin.csv")
+df = pd.read_csv("C:\\Users\\alvar\\OneDrive\\Desktop\\Stg\\Projects\\PCI\\csvs\\sin.csv")
 
-pcys = PCI(df,rounder = 15,offset = 6)
+pcys = PCI(df,rounder = 300 ,offset =5 )
 
-val = 15
-
+val = 35.2
 a = pcys.predict(val)
 b = np.sin(val)
-print(f"{abs((b-a)/b)*100}  % to a: {a} and b {b}")
 
+print(f"\n\n{abs((b-a)/b)*100}  % to a: {a} and b {b}")
+
+print("\n\n")
 print(pcys)
+
+
+
