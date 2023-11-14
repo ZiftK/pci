@@ -89,6 +89,9 @@ class PCI:
         #* Save data frame
         self.__df = dfop.read_csv(df_path) # original data frame
 
+        #* set dinamic data frame
+        self.__ddf = self.__df.copy()
+
         #* Calc mean diff data
         self.__mean_diff = dfop.mean_diff(self.__df,"x")
         
