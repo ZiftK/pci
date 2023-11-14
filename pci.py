@@ -6,7 +6,7 @@ Created on Mon Oct 23 17:14:46 2023
 """
 
 
-import pandas as pd
+import dfop
 import logging as lg
 import aop 
 
@@ -17,7 +17,40 @@ from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 
 class PCI:
     
-    def __init__(self, df : pd.DataFrame,**kwargs):
+    '''
+    TODO
+    -----
+
+    Rangos
+    ------
+
+    Es necesario considerar el uso de variables para almacenar 
+    el data frame del rango efectivo y del rango dinámico.
+    Bajo nuevas consideraciones, se decidío trabajar únicamente sobre
+    el rango estático, definiendo el rango efectivo a través de sus índices.
+    Esto es posible gracias a que el rango efectivo solo es utilizado
+    para entrenar el modelo y la comprobación del punto se lleva a cabo mediante
+    los índices del rango efectivo. Por lo tanto, no es necesario almacenarlo, ya
+    que una vez entrenado el sistema bajo ese rango, no desea volver a entrenarse
+    en el mismo, a menos que se hagan predicciones fuera del rango y después dentro
+    de él.\n
+    En cuanto al rango dinámico, se desea eliminar para trabajar sobre el rango
+    estático, expandiendolo de ser necesario.
+
+    Módulo de manipulación de data frames
+    --------------------------------
+
+    Es necesario crear un módulo que manipule los data frames con las operaciones
+    requeridas por el módulo PCI, como la expanción del rango estático tanto en
+    runtime como en un archivo para su permanencia.
+
+    Normalización de datos
+    ----------------------
+    Se necesita normalizar los datos para aumentar la precisión de los mismos.
+    Esto pretende conseguirse realizando interpolaciones que completen los datos
+
+    '''
+    def __init__(self, df_path : str,**kwargs):
         '''
         
         '''
@@ -52,8 +85,12 @@ class PCI:
         #sp: -------- Assigned values --------
         
         self.__log.info("Setting initial values..."+"\n"*2)
+
         #* Save data frame
-        self.__df = df # original data frame
+        self.__df = dfop.read_csv(df_path) # original data frame
+
+        #* Calc mean diff data
+        self.__mean_diff = dfop.mean_diff(self.__df,"x")
         
         #* Static range limits
         self.__li = None # represents the smallest value within static range
@@ -67,12 +104,6 @@ class PCI:
         #* Dynamic range limits
         self.__di = None # represents the smallest value within dynamic range
         self.__ds = None # represents the highest value within dynamic range
-
-        #* Init dynamic data frame
-        self.__ddf = None # represents dinamyc range as data frame
-
-        #* Init effective data frame
-        self.__edf = None # represents effective range as data frame
 
         #* Init coefficients
         self.__coefficients = None
@@ -104,10 +135,10 @@ class PCI:
         self.__calc_effective_limits(pivot)
 
         #calculate effective data frame
-        self.__calc_effective_df()
+        edf = self.__calc_effective_df()
 
         #solve ecuation system using effective data frame data (solve coefficients)
-        self.__solve()
+        self.__solve(edf)
 
         #clear useless coefficients
         self.__clear()
@@ -143,32 +174,32 @@ class PCI:
         Calculate effective limits on data
         '''
         
-        #get point near value (pivot)
-        cp = self.df_near_val(point)
-        
-        #inflog: calculating effective limits
-        self.__log.info(f"Calculating effective limits using -- {cp} -- as central point")
-        
-        #get cp index
-        cp_index = self.df_get_index(cp)
-        
+        # check if point is inside static range
+        if self.__li < point and point < self.__ls:
 
-        self.__ci = max(cp_index-self.__offset,self.__li) #lower limit
-        self.__cs = min(cp_index+self.__offset,self.__ls) #upper limit
+            #get nearest value to point (pivot)
+            cp = dfop.near_val(self.__df,"x",point)
+            
+            #inflog: calculating effective limits
+            self.__log.info(f"Calculating effective limits using -- {cp} -- as central point")
+            
+            #get cp index
+            cp_index = dfop.get_index(self.__df,"x",cp)
+            
 
-        #deblog: log ci and cs
-        self.__log.debug(f"Set ci as {self.__ci} and cs as {self.__cs}")
+            self.__ci = max(cp_index-self.__offset,self.__li) #lower effective limit
+            self.__cs = min(cp_index+self.__offset,self.__ls) #upper effectiev limit
 
-        #inflog: ci and cs setted
-        self.__log.info("Ci and Cs setted"+"\n"*2)
+            #deblog: log ci and cs
+            self.__log.debug(f"Set ci as {self.__ci} and cs as {self.__cs}")
 
-    def __calc_dynamic_limits(self):
-        '''
-            Useless
-        '''
+            #inflog: ci and cs setted
+            self.__log.info("Ci and Cs setted"+"\n"*2)
 
-        #TODO: add dynamic limits
-        pass
+        else:
+
+            pass
+
 
 
     def __calc_effective_df(self):
@@ -188,34 +219,19 @@ class PCI:
         self.__log.info("Setting effective data frame")
 
         # get effective range as data frame
-        edf = self.__df.sort_values(by="x")[self.__ci:self.__cs]
+        edf = dfop.segment(self.__df.sort_values(by="x"),self.__ci,self.__cs)
 
-        # if data frame is empty (effective range outside static range)
-        if edf.empty:
-            #TODO: add extrapolation options
-
-            #inflog: pass to extrapolation
-            self.__log.info("Pass to extrapolation")
-            # extrapolation
-            raise Exception(
-                "Extrapolation exception. Value out of range",
-                f"Ci_index: {self.__ci} - Cl_index: {self.__cs}"
-                )
-        
-        else:
-
-            # set effective range
-            self.__edf = edf
-
-            #inflog: effective data frame setted
-            self.__log.info("Effective data frame setted\n\n")
-
-    
-
+        print("------------",len(edf),"--",self.__ci,"--",self.__cs)
         # calc exponents
-        self.__calc_exp(len(self.__edf))
+        self.__calc_exp(len(edf))
 
-    def __solve(self):
+        #inflog: effective data frame setted
+        self.__log.info("Effective data frame setted\n\n")
+
+        #return effective data frame
+        return edf
+
+    def __solve(self, edf : dfop.DataFrame):
         '''
         Train system to interpolate data (get polynomial)
 
@@ -233,7 +249,7 @@ class PCI:
         #inflog: adjusting lines
         self.__log.info("Adjusting lines")
         # evaluate each x value into each matrix function line
-        for x in self.__edf["x"]:
+        for x in edf["x"]:
             m.append(aop.valpow(  x,self.__exp))
         
         #deblog: show pows
@@ -241,18 +257,16 @@ class PCI:
 
         #inflog: solving
         self.__log.info("Solving")
-
-        self.__tst = m
+        
         # ______ SOLVE ______
         m = matrix(m)
         
-        self.__tst2 = m
 
         #deblog: print solve matrix
-        self.__log.debug(f"Matrix : {m.shape[0]},{m.shape[1]} \n Extention: {len(self.__edf['y'])}")
+        self.__log.debug(f"Matrix : {m.shape[0]},{m.shape[1]} \n Extention: {len(edf['y'])}")
         
         # save coefficients
-        self.__coefficients = linalg.solve(m, array(self.__edf["y"]))
+        self.__coefficients = linalg.solve(m, array(edf["y"]))
         self.__coefficients = round(self.__coefficients,self.__rounder)
 
         #deblog: coefficients
@@ -301,11 +315,35 @@ class PCI:
     
     #hd: User methods
 
-    def reset(self,df : pd.DataFrame):
-        '''
-        Reset PCI with new data frame
-        '''
-        self = PCI(df)
+    def normalize(self, normal = None):
+
+        # if normal is empty, set to mean data diff
+        if not normal:
+            normal = self.__mean_diff
+
+        #set initial value as first value of "x" column
+        initial_val = self.__df["x"][0]
+
+        #set final value as last value of "x" column
+        final_val = self.__df["x"][len(self.__df)-1]
+
+        #
+        for val in arange(initial_val,final_val + self.__mean_diff, self.__mean_diff):
+            
+            if not ( self.__df["x"].isin([val]).any()):
+
+                predict_val = self.predict(val)
+
+                predict_index = dfop.get_index(self.__df,"x",val-self.__mean_diff) + 1
+
+                self.__df = dfop.insert(self.__df,"x",predict_index,val)
+
+                self.__df.loc[predict_index,"y"] = predict_val
+
+                print("SIIIIIIIIIII  ")
+                    
+
+
         
     def predict(self,point):
         '''
@@ -337,28 +375,6 @@ class PCI:
         
         return sum(pdct)
     
-    def df_near_val(self,x):
-        '''
-        Get the near value to x in to internal data frame
-        
-        Parameters
-        ----------
-        x -> value to search
-        
-        Returns
-        --------
-        Near value to x param
-        '''
-        return self.__df['x'].iloc[(self.__df['x'] - x).abs().idxmin()]
-
-    def df_get_index(self,x):
-        '''
-        
-        '''
-        return self.__df.index[self.__df['x'] == x][0
-                                                    
-                                                    
-                                                    ]
         
     def __str__(self):
         '''
@@ -415,7 +431,7 @@ class PCI:
         '''
         Set rounder to value if is greater than 0, else set to 0
         '''
-        self.__rounder = max(0,value)
+        self.__rounder = max(1,value)
 
 
 if __name__ == "__main__":

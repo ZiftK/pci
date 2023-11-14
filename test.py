@@ -16,12 +16,11 @@ import error as er
 def cuac(x):
     return x**2
 
-#df = pd.read_csv("C:\\Users\\ZiftK\\Desktop\\TODO\\Python\\pci\\csvs\\sin.csv")
-df = pd.read_csv("C:\\Users\\alvar\\OneDrive\\Desktop\\Stg\\Projects\\PCI\\csvs\\sin.csv")
+#df = pd.read_csv("C:\\Users\\alvar\\OneDrive\\Desktop\\Stg\\Projects\\PCI\\csvs\\sin.csv")
 
-pcys = PCI(df,rounder = 300 ,offset =5 )
+pcys = PCI("C:\\Users\\ZiftK\\Desktop\\TODO\\Python\\pci\\csvs\\sin.csv",rounder = 300 ,offset =5 )
 
-val = 35.2
+val = 3
 a = pcys.predict(val)
 b = np.sin(val)
 
@@ -31,4 +30,4 @@ print("\n\n")
 print(pcys)
 
 
-
+pcys.normalize()

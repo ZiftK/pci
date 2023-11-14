@@ -38,12 +38,15 @@ def ahorcado():
 
         letter = input("Ingresa una letra> ")
 
+        #* La letra no está
         if not (letter.lower() in word.lower()):
             print("\nERROR!!!!")
 
             error_count += 1
 
             shower = str[error_count]
+
+        #* La letra si está
         else:
             
             for char in size:
