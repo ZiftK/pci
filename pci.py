@@ -220,8 +220,8 @@ class PCI:
 
         # get effective range as data frame
         edf = dfop.segment(self.__df.sort_values(by="x"),self.__ci,self.__cs)
-
-        print("------------",len(edf),"--",self.__ci,"--",self.__cs)
+        self.__tst = edf
+        
         # calc exponents
         self.__calc_exp(len(edf))
 
@@ -326,21 +326,26 @@ class PCI:
 
         #set final value as last value of "x" column
         final_val = self.__df["x"][len(self.__df)-1]
-
+    
+        predict_index = 0
         #
-        for val in arange(initial_val,final_val + self.__mean_diff, self.__mean_diff):
+        for val in arange(initial_val,final_val, normal):
             
             if not ( self.__df["x"].isin([val]).any()):
 
                 predict_val = self.predict(val)
 
-                predict_index = dfop.get_index(self.__df,"x",val-self.__mean_diff) + 1
-
                 self.__df = dfop.insert(self.__df,"x",predict_index,val)
 
                 self.__df.loc[predict_index,"y"] = predict_val
-
-                print("SIIIIIIIIIII  ")
+                
+                self.__cs += 1
+                
+                self.__ci = predict_index + 1
+                print("SIIIIIIIIIII ",val)
+                
+            predict_index += 1
+            
                     
 
 
@@ -357,9 +362,17 @@ class PCI:
         #inflog: predicting
         self.__log.info("Predicting...\n\n")
 
-
+        try:
+            ci_val = self.__df["x"][self.__ci]
+            cs_val = self.__df["x"][self.__cs]
+            
+            is_outside = not (point > ci_val and point < cs_val)
+        
+        except KeyError:
+            is_outside = True
+        
         #if value is not in effective range
-        if (not ( self.__ci and self.__cs)) or (not (point >= self.__ci and point <= self.__cs)):
+        if is_outside:
             
             #deblog: retrainning
             self.__log.debug("Training again...\n\n")
