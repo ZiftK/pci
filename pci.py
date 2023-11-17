@@ -103,6 +103,39 @@ class PCI:
         self.__coefficients = delete(self.__coefficients,del_index)
         self.__exp = delete(self.__exp,del_index)
 
+    
+    def __train_in_limits(self, df : dfop.DataFrame, ref_i : int, ref_s : int, point):
+        '''
+        Set ci and cs limits using data frame, ref_i and ref_s index as reference
+        around the point
+        '''
+        # get nearest value to *point* in column x from static data frame
+        pivot = dfop.near_val(df,"x",point)
+
+        # *set effective limits
+        # set effective limits between static range
+        self.__ci = max(ref_i,pivot - self.__offset)
+        self.__cs = min(ref_s,pivot + self.__offset)
+
+        #* get effective data frame
+        edf = dfop.segment(df,self.__ci,self.__cs)
+
+        #* train in effective data frame
+        self.__train(edf)
+        
+    def __apply_pol(self,point):
+        '''
+        Apply polinomial solution to specyfic point
+        '''
+        #* make prediction
+        #pow point to each value in exponents array
+        a = aop.valpow(float(point),self.__exp)
+        # multiply each value in solve point exponents 
+        # to each value in solve coefficients
+        pdct = aop.amult(self.__coefficients,a)
+        #return sum of array
+        return sum(pdct)
+    
     def predict(self,point):
 
         # is inside static limits
@@ -120,68 +153,45 @@ class PCI:
 
         # initi effective data frame to None
         edf = None
-
-        if in_static:
-            # get nearest value to *point* in column x from static data frame
-            pivot = dfop.near_val(self.__df,"x",point)
-
-            # *set effective limits
-            # set effective limits between static range
-            self.__ci = max(self.__li,pivot - self.__offset)
-            self.__cs = min(self.__ls,pivot + self.__offset)
-
-            # *get effective data frame
-            edf = dfop.segment(self.__df,self.__ci,self.__cs)
-
-            #* train in effective data frame
-            self.__train(edf)
-
-            #* make prediction
-            #pow point to each value in exponents array
-            a = aop.valpow(float(point),self.__exp)
-            # multiply each value in solve point exponents 
-            # to each value in solve coefficients
-            pdct = aop.amult(self.__coefficients,a)
-            #return sum of array
-            return sum(pdct)
-            
+        rtn = None
         
-        elif in_dynamic:
-            
-            # get nearest value to *point* in column x from static data frame
-            pivot = dfop.near_val(self.__ddf,"x",point)
+        while True:
+            # while will be breake it if
+            # predict point is inside any range,
+            # else, the system iterate throught dynamic
+            # range to update it to point in it
+        
+            if in_effective:
+                
+                break #break while
 
-            # *set effective limits
-            # set effective limits between static range
-            self.__ci = max(self.__di,pivot - self.__offset)
-            self.__cs = min(self.__ds,pivot + self.__offset)
-
-            # *get effective data frame
-            edf = dfop.segment(self.__ddf,self.__ci,self.__cs)
-
-            #* train in effective data frame
-            self.__train(edf)
-
-            #* make prediction
-            #pow point to each value in exponents array
-            a = aop.valpow(float(point),self.__exp)
-            # multiply each value in solve point exponents 
-            # to each value in solve coefficients
-            pdct = aop.amult(self.__coefficients,a)
-            #return sum of array
-            return sum(pdct)
-            pass
-
-        else:
-
+            elif in_static:
+                
+                self.__train_in_limits(self.__df,self.__li,self.__ls,point)
+                break #break while
             
 
-            pass
-
-        pass
-
+            else:
+                # if point is outside effective and static ranges,
+                # should be inside or outside dynamic range, wathever
+                # system train it in dynamiic range
+                
+                # train in dinamic range
+                self.__train_in_limits(self.__ddf,self.__di,self.__ds,point)
+                
+                if in_dynamic:
+                    
+                    #if point is inside dynamic range
+                    break #break while
+                
+                
+                
+                pass
+        
+        
+        return self.__apply_pol(point)
+        
 if __name__ == "__main__":
-    
     
 
     pass
