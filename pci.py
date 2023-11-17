@@ -13,7 +13,16 @@ import aop
 from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 
 
+class PCI:
 
+    def __init__(self, data_path) -> None:
+        
+
+        # Get data frames
+        self.__df = dfop.read_csv(data_path)
+        self.__ddf = self.__df.copy()
+
+        
 
 
 
