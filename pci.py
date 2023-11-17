@@ -118,13 +118,27 @@ class PCI:
             #if effective limits are null, set condition to false
             in_effective = False
 
+        # initi effective data frame to None
+        edf = None
+
         if in_static:
             # get nearest value to *point* in column x from static data frame
             pivot = dfop.near_val(self.__df,"x",point)
 
-            # set effective limits
+            # *set effective limits
+            # set effective limits between static range
+            self.__ci = max(self.__li,pivot - self.__offset)
+            self.__cs = min(self.__ls,pivot + self.__offset)
+
+            # *get effective data frame
+            edf = dfop.segment(self.__df,self.__ci,self.__cs)
+
+            #* train in effective data frame
+            self.__train(edf)
+
+            # * return prediction
+            return 
             
-            pass
         
         elif in_dynamic:
 
