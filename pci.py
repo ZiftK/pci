@@ -90,7 +90,7 @@ class PCI:
         self.__df = dfop.read_csv(df_path) # original data frame
 
         #* set dinamic data frame
-        self.__ddf = self.__df.copy()
+        self.__ddf = dfop.read_csv(df_path)
 
         #* Calc mean diff data
         self.__mean_diff = dfop.mean_diff(self.__df,"x")
@@ -170,6 +170,9 @@ class PCI:
 
         self.__li = 0   #lower limit
         self.__ls = len(self.__df)-1#upper limit
+
+        self.__di = self.__li
+        self.__ds = self.__ls
         pass
 
     def __calc_effective_limits(self,point):
@@ -201,6 +204,35 @@ class PCI:
 
         else:
 
+            predict_index = -1
+
+            #if point is to the right
+            if point > self.__ds:
+                #set effective limits to right limit
+                self.__cs = self.__ds
+                self.___ci = self.__cs - self.__offset
+                predict_index = self.__ds
+
+            #if point is to the left
+            elif point < self.__di:
+                #set effective limits to left limit
+                self.__ci = self.__di
+                self.__cis = self.__ci + self.__offset
+                predict_index = self.__di
+            
+
+            edf = self.__calc_effective_df()
+            self.__solve(edf)
+            self.__clear()
+
+            predict_point = self.__ddf["x"][predict_index] + self.__mean_diff
+
+            dfop.insert(self.__ddf,"x",predict_index,predict_point)
+
+            predict_res = self.predict(predict_point)
+
+            self.__ddf["y"][predict_index] = predict_res
+            
             pass
 
 
@@ -336,15 +368,12 @@ class PCI:
             
             if not ( self.__df["x"].isin([val]).any()):
 
-                predict_val = self.predict(val)
+                predict_val = self.predict(val,point_round=5)
 
-                self.__df = dfop.insert(self.__df,"x",predict_index,val)
+                dfop.insert(self.__ddf,"x",predict_index,val)
 
-                self.__df.loc[predict_index,"y"] = predict_val
-                
-                self.__cs += 1
-                
-                self.__ci = predict_index + 1
+                self.__ddf.loc[predict_index,"y"] = predict_val
+
                 print("SIIIIIIIIIII ",val)
                 
             predict_index += 1
@@ -353,7 +382,7 @@ class PCI:
 
 
         
-    def predict(self,point):
+    def predict(self,point, **kwargs):
         '''
         Get predict value to specific parameters
 
@@ -362,6 +391,8 @@ class PCI:
         Predict value
         '''
 
+        point_round = kwargs.get("point_round",self.__rounder)
+
         #inflog: predicting
         self.__log.info("Predicting...\n\n")
 
@@ -369,7 +400,7 @@ class PCI:
             ci_val = self.__df["x"][self.__ci]
             cs_val = self.__df["x"][self.__cs]
             
-            is_outside = not (point > ci_val and point < cs_val)
+            is_outside = not (round(point,point_round) > ci_val and round(point,point_round) < cs_val)
         
         except KeyError:
             is_outside = True
