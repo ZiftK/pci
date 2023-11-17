@@ -63,6 +63,41 @@ class PCI:
         self.__coefficients = linalg.solve(m, array(edf["y"]))
         self.__coefficients = round(self.__coefficients,self.__rounder)
 
+    def __clear(self):
+        '''
+        Delete Monomials with despicable coeficients
+
+        Returns
+        -------
+        None.
+
+        '''
+        
+        #inflog: clear coefficients
+        
+        self.__log.info("Cleaning coefficients...")
+        # Index list to delete
+        del_index = list()
+        
+        # get index of despicable coeficients
+        # iterate throught each round coeficient and get his index
+        # for delete to polynomial
+        for index, coef in enumerate(self.__coefficients):
+            
+            # add index with despicable coeficients
+            if coef == 0:
+                
+                #deblog: deleted - index
+                self.__log.debug(f"Coefficient - {index} - deleted")
+                del_index.append(index)
+        
+        # This is done to generate polynomials as small as possible or to reduce noise
+        self.__coefficients = delete(self.__coefficients,del_index)
+        self.__exp = delete(self.__exp,del_index)
+
+        #inflog: coefficients cleaned
+        self.__log.info("Coefficients cleaned")
+
 
 
 if __name__ == "__main__":
