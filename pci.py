@@ -15,12 +15,33 @@ from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 
 class PCI:
 
-    def __init__(self, data_path) -> None:
+    def __init__(self, data_path, **kwargs) -> None:
         
 
-        # Get data frames
+        # *Get data frames
         self.__df = dfop.read_csv(data_path)
         self.__ddf = self.__df.copy()
+
+        self.__li = 0
+        self.__ls = len(self.__df)-1
+
+        self.__di = self.__li
+        self.__ds = self.__ls
+
+        self.__ci = None
+        self.__cs = None
+
+        self.__coefficients = None
+
+        self.__offset = kwargs.get("offset",5)
+        self.__rounder = kwargs.get("rounder",15)
+
+    def __train(self, edf: dfop.DataFrame):
+
+        self.__calc_exp(len(edf))
+        self.__solve(edf)
+        self.__clear()
+        pass
 
     def __calc_exp(self, degree):
         
@@ -82,7 +103,38 @@ class PCI:
         self.__coefficients = delete(self.__coefficients,del_index)
         self.__exp = delete(self.__exp,del_index)
 
+    def predict(self,point):
 
+        # is inside static limits
+        in_static = point < self.__ls and point > self.__li
+
+        # is inside dynamic limits 
+        in_dynamic = point < self.__ds and point > self.__di
+
+        try:#try check if inside effective range
+            # is inside effecitve limits
+            in_effective = point < self.__cs and point > self.__ci
+        except AttributeError:
+            #if effective limits are null, set condition to false
+            in_effective = False
+
+        if in_static:
+            # get nearest value to *point* in column x from static data frame
+            pivot = dfop.near_val(self.__df,"x",point)
+
+            # set effective limits
+            
+            pass
+        
+        elif in_dynamic:
+
+            pass
+
+        else:
+
+            pass
+
+        pass
 
 if __name__ == "__main__":
     
