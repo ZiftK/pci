@@ -22,6 +22,21 @@ class PCI:
         self.__df = dfop.read_csv(data_path)
         self.__ddf = self.__df.copy()
 
+    def __calc_exp(self, degree):
+        
+        #inflog: calculating exponents
+        self.__log.info("Calculating exponents...")
+
+        #calculate exponents
+        self.__exp = [n for n in range(0,degree)]
+
+        #deblog: calculated as
+        self.__log.info(f"Exponents setted as {self.__exp}")
+
+        #inflog: exponents setted
+        self.__log.info("Exponents setted"+"\n"*2)
+        pass
+    
     def __solve(self, edf : dfop.DataFrame):
         '''
         Train system to interpolate data (get polynomial)
