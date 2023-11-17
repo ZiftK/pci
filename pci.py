@@ -136,15 +136,45 @@ class PCI:
             #* train in effective data frame
             self.__train(edf)
 
-            # * return prediction
-            return 
+            #* make prediction
+            #pow point to each value in exponents array
+            a = aop.valpow(float(point),self.__exp)
+            # multiply each value in solve point exponents 
+            # to each value in solve coefficients
+            pdct = aop.amult(self.__coefficients,a)
+            #return sum of array
+            return sum(pdct)
             
         
         elif in_dynamic:
+            
+            # get nearest value to *point* in column x from static data frame
+            pivot = dfop.near_val(self.__ddf,"x",point)
 
+            # *set effective limits
+            # set effective limits between static range
+            self.__ci = max(self.__di,pivot - self.__offset)
+            self.__cs = min(self.__ds,pivot + self.__offset)
+
+            # *get effective data frame
+            edf = dfop.segment(self.__ddf,self.__ci,self.__cs)
+
+            #* train in effective data frame
+            self.__train(edf)
+
+            #* make prediction
+            #pow point to each value in exponents array
+            a = aop.valpow(float(point),self.__exp)
+            # multiply each value in solve point exponents 
+            # to each value in solve coefficients
+            pdct = aop.amult(self.__coefficients,a)
+            #return sum of array
+            return sum(pdct)
             pass
 
         else:
+
+            
 
             pass
 
