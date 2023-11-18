@@ -18,11 +18,11 @@ def cuac(x):
 
 #df = pd.read_csv("C:\\Users\\alvar\\OneDrive\\Desktop\\Stg\\Projects\\PCI\\csvs\\sin.csv")
 
-pcys = PCI("C:\\Users\\alvar\\OneDrive\\Desktop\\Stg\\Projects\\PCI\\csvs\\sin.csv",rounder = 300 ,offset =5 )
+pcys = PCI("C:\\Users\\alvar\\OneDrive\\Desktop\\Stg\\Projects\\PCI\\csvs\\sin.csv",rounder = 10 ,offset =15)
 
 #pcys = PCI("C:\\Users\\ZiftK\\Desktop\\TODO\\Python\\pci\\csvs\\sin.csv",rounder = 300 ,offset =5 )
 
-val = 3
+val = -2
 a = pcys.predict(val)
 b = np.sin(val)
 

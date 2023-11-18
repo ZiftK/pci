@@ -1,6 +1,6 @@
 
-from pandas import read_csv
-from pandas import DataFrame
+from pandas import read_csv, concat
+from pandas import DataFrame, Series
 
 
 
@@ -43,3 +43,4 @@ def insert(df: DataFrame,column_name : str, index : int, value : float):
     # Inserta el valor 6 en la fila 2 de la columna y desplaza los valores hacia abajo
     df.loc[index:, column_name] = df.loc[index:, column_name].shift(1)
     df.loc[index, column_name] = value
+
