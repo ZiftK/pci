@@ -36,7 +36,7 @@ class PCI:
         self.__offset = kwargs.get("offset",5)
         self.__rounder = kwargs.get("rounder",15)
 
-        self.__mean_diff = None
+        self.__mean_diff = dfop.mean_diff(self.__df,"x")
         
     def __train(self, edf: dfop.DataFrame):
 
@@ -59,8 +59,6 @@ class PCI:
         None.
 
         '''
-        
-
         # matrix to resolve
         m = list()
 
@@ -70,7 +68,6 @@ class PCI:
         
         # ______ SOLVE ______
         m = matrix(m)
-        
         
         # save coefficients
         self.__coefficients = linalg.solve(m, array(edf["y"]))
@@ -116,8 +113,8 @@ class PCI:
 
         # *set effective limits
         # set effective limits between static range
-        self.__ci = max(ref_i,pivot - self.__offset)
-        self.__cs = min(ref_s,pivot + self.__offset)
+        self.__ci = int(max(ref_i,pivot - self.__offset))
+        self.__cs = int(min(ref_s,pivot + self.__offset))
 
         #* get effective data frame
         edf = dfop.segment(df,self.__ci,self.__cs)
@@ -149,7 +146,7 @@ class PCI:
         try:#try check if inside effective range
             # is inside effecitve limits
             in_effective = point < self.__cs and point > self.__ci
-        except AttributeError:
+        except TypeError:
             #if effective limits are null, set condition to false
             in_effective = False
         
@@ -183,17 +180,36 @@ class PCI:
                 
                 # init predict point
                 predict_point = None
+                # aux values
+                limit = None
+                step = None
                 
                 #* predict one step outside dynamic range
                 # if point is left to dynamic range
                 if point < self.__di:
-                    predict_point = self.__ddf["x"][0] - self.__mean_diff
+                    # set limit as lower dynamic limit
+                    limit = self.__di
+                    # set step as negative mean diff
+                    step = -1*self.__mean_diff
                     pass
                 
                 # if point is right to dynamic range
                 else:
-                    
+                    # set limit as upper dynamic limit
+                    limit = self.__ds
+                    # set step as mean diff
+                    step = self.__mean_diff
                     pass
+                
+                # apply point prediction with outside step
+                predict_point = self.__ddf["x"][limit] + step
+                # get extrapolation value
+                extrapol_val = self.__apply_pol(predict_point)
+                # insert predict point to dynamic data frame in
+                # limit index and "x" column
+                dfop.insert(self.__ddf,"x",limit,predict_point)
+                # set "y" as extrapolate value
+                self.__ddf["y"][limit] = extrapol_val
                 
                 pass
         
@@ -202,5 +218,5 @@ class PCI:
         
 if __name__ == "__main__":
     
-
+    
     pass
