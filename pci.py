@@ -36,6 +36,8 @@ class PCI:
         self.__offset = kwargs.get("offset",5)
         self.__rounder = kwargs.get("rounder",15)
 
+        self.__mean_diff = None
+        
     def __train(self, edf: dfop.DataFrame):
 
         self.__calc_exp(len(edf))
@@ -150,28 +152,24 @@ class PCI:
         except AttributeError:
             #if effective limits are null, set condition to false
             in_effective = False
-
-        # initi effective data frame to None
-        edf = None
-        rtn = None
         
-        while True:
+        while True: #* train loop
             # while will be breake it if
             # predict point is inside any range,
             # else, the system iterate throught dynamic
             # range to update it to point in it
         
-            if in_effective:
+            if in_effective: #* if point is inside effective range
                 
                 break #break while
 
-            elif in_static:
+            elif in_static: #* if point is inside n static range
                 
                 self.__train_in_limits(self.__df,self.__li,self.__ls,point)
                 break #break while
             
 
-            else:
+            else: #* else
                 # if point is outside effective and static ranges,
                 # should be inside or outside dynamic range, wathever
                 # system train it in dynamiic range
@@ -179,12 +177,23 @@ class PCI:
                 # train in dinamic range
                 self.__train_in_limits(self.__ddf,self.__di,self.__ds,point)
                 
-                if in_dynamic:
+                if in_dynamic: #* if point is in dynamic range
                     
-                    #if point is inside dynamic range
                     break #break while
                 
+                # init predict point
+                predict_point = None
                 
+                #* predict one step outside dynamic range
+                # if point is left to dynamic range
+                if point < self.__di:
+                    predict_point = self.__ddf["x"][0] - self.__mean_diff
+                    pass
+                
+                # if point is right to dynamic range
+                else:
+                    
+                    pass
                 
                 pass
         
