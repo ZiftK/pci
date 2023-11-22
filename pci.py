@@ -19,17 +19,27 @@ class PCI:
         
 
         # *Get data frames
-        self.__df = dfop.read_csv(data_path)
-        self.__ddf = self.__df.copy()
+        self.__df = dfop.read_csv(data_path) # static data frame
+        self.__ddf = self.__df.copy() # dynamic data frame
 
-        self.__li = 0
-        self.__ls = len(self.__df)-1
+        #* Static limits
+        self.__li = 0 # lowwer limit
+        self.__ls = len(self.__df)-1 # upper limit
 
-        self.__di = self.__li
-        self.__ds = self.__ls
+        #* Dynamic limits
+        self.__di = self.__li # upper limit
+        self.__ds = self.__ls # lowwer limit
 
         self.__ci = None
         self.__cs = None
+        
+        #* Dynamic effective limits
+        self.__dci = None # Lowwer limit
+        self.__dcs = None # upper limit
+        
+        #* Static effective limits
+        self.__sci = None # loweer limit
+        self.__scs = None # upper limit
 
         self.__coefficients = None
         self.__exp = None
@@ -43,14 +53,18 @@ class PCI:
         self.__tst2 = None
         
     def __train(self, edf: dfop.DataFrame):
-
+        '''
+        Train system to specyfic effective data frame
+        '''
         self.__calc_exp(len(edf))
         self.__solve(edf)
         self.__clear()
         pass
 
     def __calc_exp(self, degree):
-        
+        '''
+        Calculate exponents with specyfic degree
+        '''
         #calculate exponents
         self.__exp = [n for n in range(0,degree)]
     
@@ -141,7 +155,10 @@ class PCI:
         return sum(pdct)
     
     def predict(self,point):
-
+        '''
+        Get aprox value from trained system
+        '''
+        point = round(point,5)
         # is inside static limits
         in_static = point < self.__df["x"][self.__ls] and point > self.__df["x"][self.__li]
 
@@ -157,17 +174,16 @@ class PCI:
 
             try:#try check if inside effective range
                 # is inside effecitve limits
-                in_effective = point < self.__ddf["x"][self.__cs] and point > self.__ddf["x"][self.__ci]
+                in_effective = point < self.__df["x"][self.__cs] and point > self.__df["x"][self.__ci]
             except TypeError:
                 #if effective limits are null, set condition to false
                 in_effective = False
             except KeyError:
                 in_effective = False
                 
-            print(f"-------- {self.__ci} - {self.__cs}")
             
             if in_effective: #* if point is inside effective range
-                
+                print("effective")
                 break #break while
 
             elif in_static: #* if point is inside n static range
@@ -197,13 +213,11 @@ class PCI:
                 
                 #* predict one step outside dynamic range
                 # if point is left to dynamic range
-                if point < self.__di:
+                if point < self.__df["x"][self.__di]:
                     # set limit as lower dynamic limit
                     limit = self.__di
                     # set step as negative mean diff
                     step = -1*(0.1) #!Valor experimental
-                    # set concat order
-                    concat = [df_0, self.__ddf]
                     pass
                 
                 # if point is right to dynamic range
@@ -212,8 +226,6 @@ class PCI:
                     limit = self.__ds
                     # set step as mean diff
                     step = 0.1 #!Valor experimental
-                    # set concat order
-                    concat = [self.__ddf,df_0]
                     pass
                 
                 # apply point prediction with outside step
@@ -222,8 +234,10 @@ class PCI:
                 extrapol_val = self.__apply_pol(predict_point)
                 # create new data frame
                 df_0 = dfop.DataFrame({"x":[predict_point],"y":[extrapol_val]})
+                # concat order
+                concat = [df_0,self.__ddf] if point < self.__df["x"][self.__di] else [self.__ddf,df_0]
                 # concat data frames
-                self.__ddf = dfop.concat([df_0, self.__ddf], axis=0, ignore_index=True)
+                self.__ddf = dfop.concat(concat, axis=0, ignore_index=True)
                 
                 pass
         
@@ -231,9 +245,37 @@ class PCI:
         return self.__apply_pol(point)
     
     
-    def normalize(self):
+    def normalize(self,normal = None):
+        '''
+        Flat dynamic data frame using normal as difference value
+        '''
+        if normal == None:# If optional normal is null
+            normal = self.__mean_diff # set normal to data frame mean diff
         
-        pass
+        #set initial value to iterate
+        initial = self.__df["x"][self.__li]
+        #set final value to iterate
+        final = self.__df["x"][self.__ls] + normal
+        
+        #index to insert new predict value
+        insert_index = 0
+        
+        #init new data frame
+        df = self.__df.copy()
+        
+        #iterate throgth init range
+        for x in arange(initial,final,normal):
+            
+            if not x in self.__df["x"]:# if predict value is not in static data frame
+                
+                y = self.predict(x)
+                dfop.insert(df,"x",insert_index,x)
+                self.__ddf["y"][insert_index] = y
+                
+            insert_index += 1
+        
+        #set static data frame to new data
+        self.__df = df
     
     def __str__(self):
         '''
