@@ -6,9 +6,10 @@ Created on Mon Oct 23 17:14:46 2023
 """
 
 
-from data import dfop
+
 import logging as lg
 import aop 
+import dfop
 
 from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 
@@ -308,14 +309,128 @@ class PCI:
         return string.replace("e", "*10^")
 
 def pcit_ov(offset_range, rounder, values_range):
+    '''
+    Iterate through the offset range
+    and set the PCI system for each offset in the range. 
+    Then, approximate each value in the values range using each 
+    one of the offsets set
+    '''
 
-    for current_off in offset_range:
+    aprox_values : list = list() # aproximate values range
 
+    for current_off in offset_range: # iterate throught offset range
+
+        # init pci system
         pcys = PCI(rounder = rounder, offset = current_off)
 
-    pass
+        for value in values_range: # iterate throught values range
+
+            # aproximate values
+            aprox_values.append(pcys.predict(value))
+
+        del pcys # delete pci system
+
+    return aprox_values # return aproximate values
+
+def pcit_rv(offset, rounder_range, values_range):
+    '''
+    Iterate through the rounder range and set the PCI
+    system for each rounder in the range. Then, aproximate
+    each value in the values range using each one of the
+    rounder set
+    '''
+
+    aprox_values : list = list() # aproximate values range
+
+    for current_round in rounder_range: # iterate throught offset range
+
+        # init pci system
+        pcys = PCI(rounder = current_round, offset = offset)
+
+        for value in values_range: # iterate throught values range
+
+            # aproximate values
+            aprox_values.append(pcys.predict(value))
+
+        del pcys # delete pci system
+
+    return aprox_values # return aproximate values
+
+def relative_error(real_val,aprox_val):
+    return 100*abs(real_val-aprox_val)/real_val
+
+def compare(real_function,values_range,offset,rounder):
+
+    # sp: ------------- Vars -------------
+
+    # variables to set pci evaluate function
+    offset_iter, rounder_iter = True, True
+    # pci evaluate function
+    pci_func = None
+    # real function values
+    real_values = list()
+    # aproximate pci values
+    aprox_values = list()
+    # relative error
+    error = 0
+
+    # sp: ------------- Check iterables -------------
+
+    try:# check if offset is iterable
+        iter(offset)
+    except TypeError:# save it
+        offset_iter = False
+
+    try:# chacj if rounder is iterable
+        iter(rounder) 
+    except TypeError:# save it
+        rounder_iter = False
+
+    # Check whether offset or rounder is iterable because the 
+    # function only supports one of the two being iterable
+
+    # sp: ------------- Def pci function -------------
+
+    # if offset is iterable and rounder is not
+    if offset_iter and not rounder_iter:
+
+        # set pci evaluate function as pci offset variable
+        pci_func = pcit_ov
+
+    # if rounder is iterable and offset is not
+    elif rounder_iter and not offset_iter:
+
+        # set pci evaluate function as pci rounder variable
+        pci_func = pcit_rv
+    else:
+        raise Exception("Offset and rounder cant vary at the same time")
+    
+    # sp: ------------- Calculate values -------------
+
+    # calculate aprox values
+    aprox_values = pci_func(offset,rounder,values_range)
+
+    #* Calculate real values
+    for value in values_range:
+        real_values.append(real_function(value))
+
+    #sp: ------------- Calculate error -------------
+
+    # vectorice lists
+    aprox_values, real_values = array(aprox_values), array(real_values)
+
+    error = relative_error(real_values,aprox_values)
+
+    return error
+
+
 
 if __name__ == "__main__":
     
+    try:
+        iter(2)
+        print("iterable")
+    except TypeError:
+        print("no iterable")
     
     pass
