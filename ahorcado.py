@@ -73,5 +73,5 @@ def ahorcado():
 
 if __name__ == "__main__":
     
-    click_100_times(400)
+    ahorcado()
     pass

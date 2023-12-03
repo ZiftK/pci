@@ -6,7 +6,7 @@ Created on Mon Oct 23 17:14:46 2023
 """
 
 
-import dfop
+from data import dfop
 import logging as lg
 import aop 
 
@@ -15,11 +15,20 @@ from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 
 class PCI:
 
-    def __init__(self, data_path, **kwargs) -> None:
+    def __init__(self, data, **kwargs) -> None:
         
 
-        # *Get data frames
-        self.__df = dfop.read_csv(data_path) # static data frame
+        if type(data) == str:
+            # *Get data frames
+            self.__df = dfop.read_csv(data) # static data frame
+            
+
+        elif type(data) == dfop.DataFrame:
+            self.__df = data
+
+        else:
+            raise Exception("Invalid data type. Must be string path or pandas data frame.")
+
         self.__ddf = self.__df.copy() # dynamic data frame
 
         #* Static limits
@@ -48,7 +57,7 @@ class PCI:
         #* Static calc values
         self.__scoefficients = None
         self.__sexp = None
-        
+
         self.__coefficients = None
         self.__exp = None
 
@@ -148,6 +157,7 @@ class PCI:
 
         #* train in effective data frame
         self.__train(edf)
+
         
     def __apply_pol(self,point):
         '''
@@ -159,6 +169,7 @@ class PCI:
         # multiply each value in solve point exponents 
         # to each value in solve coefficients
         pdct = aop.amult(self.__coefficients,a)
+        self.__tst2 = pdct
         #return sum of array
         return sum(pdct)
     
@@ -295,6 +306,15 @@ class PCI:
             string += f"{self.__coefficients[index]}*x^{self.__exp[index]}"
             string += "" if index == len(self.__coefficients)-1 else "+"
         return string.replace("e", "*10^")
+
+def pcit_ov(offset_range, rounder, values_range):
+
+    for current_off in offset_range:
+
+        pcys = PCI(rounder = rounder, offset = current_off)
+
+    pass
+
 if __name__ == "__main__":
     
     
