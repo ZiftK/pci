@@ -178,17 +178,19 @@ class PCI:
         '''
         Get aprox value from trained system
         '''
-        point = round(point,5)
-        # is inside static limits
-        in_static = point < self.__df["x"][self.__ls] and point > self.__df["x"][self.__li]
-
         
+        point = round(point,5)
+        print(point)
+        # is inside static limits
+        in_static = point <= self.__df["x"][self.__ls] and point >= self.__df["x"][self.__li]
+
+        print(f"{self.__df['x'][self.__ls]} -- {self.__df['x'][self.__li]}")
         while True: #* train loop
             # while will be breake it if
             # predict point is inside any range,
             # else, the system iterate throught dynamic
             # range to update it to point in it
-            
+
             # is inside dynamic limits 
             in_dynamic = point < self.__ddf["x"][self.__ds] and point > self.__ddf["x"][self.__di]
 
@@ -203,11 +205,11 @@ class PCI:
                 
             
             if in_effective: #* if point is inside effective range
-                print("effective")
+                
                 break #break while
 
             elif in_static: #* if point is inside n static range
-                
+ 
                 self.__train_in_limits(self.__df,self.__li,self.__ls,point)
                 break #break while
             
@@ -308,7 +310,7 @@ class PCI:
             string += "" if index == len(self.__coefficients)-1 else "+"
         return string.replace("e", "*10^")
 
-def pcit_ov(offset_range, rounder, values_range):
+def pcit_ov(data, offset_range, rounder, values_range)-> dict:
     '''
     Iterate through the offset range
     and set the PCI system for each offset in the range. 
@@ -316,23 +318,50 @@ def pcit_ov(offset_range, rounder, values_range):
     one of the offsets set
     '''
 
-    aprox_values : list = list() # aproximate values range
+    # aprox_values is a dictionary that stores numpy arrays. 
+    # This is because for each offset in the offset range, a 
+    # list of approximate values will be calculated.
+    # Each key of the ‘aprox_values’ dictionary represents 
+    # the offset that will be calculated, and its content 
+    # represents the output PCI predicted values from the 
+    # ‘values_range’ as inputs.
 
-    for current_off in offset_range: # iterate throught offset range
+    aprox_values : dict = dict() # aproximate values dictionary
+    current_values : list = list() # ccurrent PCI predicted values for each step
 
-        # init pci system
-        pcys = PCI(rounder = rounder, offset = current_off)
+    # iterate throught offset range.
+    # For each offset in 'offset_range'
+    # a list of PCI predicted values will
+    # be calculate.
+    for current_off in offset_range: 
 
-        for value in values_range: # iterate throught values range
+        # debug message
+        print(f"\n\nPCI offset variable** current offset: {current_off}")
+
+        # init pci system with offset as current offset
+        pcys = PCI(data, rounder = rounder, offset = current_off)
+        
+        # iterate throught values range.
+        # For each value in the ‘values_range’, 
+        # a PCI predicted value will be calculated.
+        for value in values_range: 
+
+            print(f"\t current value: {value}")
 
             # aproximate values
-            aprox_values.append(pcys.predict(value))
+            current_values.append(pcys.predict(value))
+
+        # vectorize and save values
+        aprox_values[current_off] = array(current_values)
+
+        # clear current values
+        current_values.clear()
 
         del pcys # delete pci system
 
     return aprox_values # return aproximate values
 
-def pcit_rv(offset, rounder_range, values_range):
+def pcit_rv(data, offset, rounder_range, values_range)-> dict:
     '''
     Iterate through the rounder range and set the PCI
     system for each rounder in the range. Then, aproximate
@@ -340,26 +369,38 @@ def pcit_rv(offset, rounder_range, values_range):
     rounder set
     '''
 
-    aprox_values : list = list() # aproximate values range
+    aprox_values : dict = dict() # aproximate values dictionary
+    current_values : list = list() 
 
     for current_round in rounder_range: # iterate throught offset range
 
+        # debug message
+        print(f"\n\nPCI rounder variable** current round: {current_round}")
+
         # init pci system
-        pcys = PCI(rounder = current_round, offset = offset)
+        pcys = PCI(data,rounder = current_round, offset = offset)
 
         for value in values_range: # iterate throught values range
 
+            print(f"\t current value: {value}")
+
             # aproximate values
-            aprox_values.append(pcys.predict(value))
+            current_values.append(pcys.predict(value))
+
+        # vectorize values and save it
+        aprox_values[current_round] = array(current_values)
+
+        # clear current values
+        current_values.clear()
 
         del pcys # delete pci system
 
     return aprox_values # return aproximate values
 
 def relative_error(real_val,aprox_val):
-    return 100*abs(real_val-aprox_val)/real_val
+    return 100*abs((real_val-aprox_val)/real_val)
 
-def compare(real_function,values_range,offset,rounder):
+def compare(data, real_function,values_range, offset, rounder):
 
     # sp: ------------- Vars -------------
 
@@ -373,6 +414,8 @@ def compare(real_function,values_range,offset,rounder):
     aprox_values = list()
     # relative error
     error = 0
+    # errors dictionary
+    error_dict = dict()
 
     # sp: ------------- Check iterables -------------
 
@@ -408,7 +451,7 @@ def compare(real_function,values_range,offset,rounder):
     # sp: ------------- Calculate values -------------
 
     # calculate aprox values
-    aprox_values = pci_func(offset,rounder,values_range)
+    aprox_values = pci_func(data, offset,rounder,values_range)
 
     #* Calculate real values
     for value in values_range:
@@ -417,11 +460,15 @@ def compare(real_function,values_range,offset,rounder):
     #sp: ------------- Calculate error -------------
 
     # vectorice lists
-    aprox_values, real_values = array(aprox_values), array(real_values)
+    real_values =  array(real_values)
 
-    error = relative_error(real_values,aprox_values)
+    for key in aprox_values.keys():
+        error = relative_error(real_values,aprox_values[key])
+        error_dict[key] = error
 
-    return error
+
+
+    return error_dict
 
 
 
