@@ -44,3 +44,42 @@ def insert(df: DataFrame,column_name : str, index : int, value : float):
     df.loc[index:, column_name] = df.loc[index:, column_name].shift(1)
     df.loc[index, column_name] = value
 
+
+
+class DataRange:
+
+    def __init__(self,df: DataFrame) -> None:
+        
+        self.__df = None # data frame
+
+        if type(df) == DataFrame: #try get data frame
+            self.__df = df
+        elif type(df) == str:
+            self.__df = read_csv(df)
+        else:# if param type are not data frame or string raise exception
+            raise TypeError("A data frame or string path are expected")
+        
+        self.__ci = None #upper effective limit
+        self.__cs = None #lower effective limit
+    
+
+    @property
+    def ci(self):
+        '''
+        Return ci limit
+        '''
+        return self.__ci
+    
+    @property
+    def cs(self):
+        '''
+        Return cs limit
+        '''
+        return self.__cs
+    
+    @property
+    def cis(self):
+        '''
+        Return ci and cs limit as tuple
+        '''
+        return self.__ci, self.__cs

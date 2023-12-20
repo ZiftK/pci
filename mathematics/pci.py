@@ -180,9 +180,18 @@ class PCI:
         '''
         
         point = round(point,5)
-        print(point)
+
         # is inside static limits
         in_static = point <= self.__df["x"][self.__ls] and point >= self.__df["x"][self.__li]
+
+        try:#try check if inside effective range
+            # is inside effecitve limits
+            in_effective = point < self.__df["x"][self.__cs] and point > self.__df["x"][self.__ci]
+        except TypeError:
+            #if effective limits are null, set condition to false
+            in_effective = False
+        except KeyError:
+            in_effective = False
 
         print(f"{self.__df['x'][self.__ls]} -- {self.__df['x'][self.__li]}")
         while True: #* train loop
@@ -194,22 +203,11 @@ class PCI:
             # is inside dynamic limits 
             in_dynamic = point < self.__ddf["x"][self.__ds] and point > self.__ddf["x"][self.__di]
 
-            try:#try check if inside effective range
-                # is inside effecitve limits
-                in_effective = point < self.__df["x"][self.__cs] and point > self.__df["x"][self.__ci]
-            except TypeError:
-                #if effective limits are null, set condition to false
-                in_effective = False
-            except KeyError:
-                in_effective = False
-                
-            
             if in_effective: #* if point is inside effective range
                 
                 break #break while
 
             elif in_static: #* if point is inside n static range
- 
                 self.__train_in_limits(self.__df,self.__li,self.__ls,point)
                 break #break while
             
