@@ -20,16 +20,8 @@ class PCI:
         
 
         
-        #* Dynamic calc values
-        self.__dcoefficients = None # dynamic coefficients
-        self.__dexp = None  # dynamic exponents
-
-        #* Static calc values
-        self.__scoefficients = None
-        self.__sexp = None
-
+    
         self.__coefficients = None
-        self.__exp = None
 
         self.__offset = kwargs.get("offset",5)
         self.__rounder = kwargs.get("rounder",15)
