@@ -19,38 +19,7 @@ class PCI:
     def __init__(self, data, **kwargs) -> None:
         
 
-        if type(data) == str:
-            # *Get data frames
-            self.__df = dfop.read_csv(data) # static data frame
-            
-
-        elif type(data) == dfop.DataFrame:
-            self.__df = data
-
-        else:
-            raise Exception("Invalid data type. Must be string path or pandas data frame.")
-
-        self.__ddf = self.__df.copy() # dynamic data frame
-
-        #* Static limits
-        self.__li = 0 # lowwer limit
-        self.__ls = len(self.__df)-1 # upper limit
-
-        #* Dynamic limits
-        self.__di = self.__li # upper limit
-        self.__ds = self.__ls # lowwer limit
-
-        self.__ci = None
-        self.__cs = None
         
-        #* Dynamic effective limits
-        self.__dci = None # Lowwer limit
-        self.__dcs = None # upper limit
-        
-        #* Static effective limits
-        self.__sci = None # loweer limit
-        self.__scs = None # upper limit
-
         #* Dynamic calc values
         self.__dcoefficients = None # dynamic coefficients
         self.__dexp = None  # dynamic exponents
