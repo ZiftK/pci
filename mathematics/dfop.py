@@ -113,3 +113,10 @@ class DataRange:
         '''
             
         return near_val(self.__df, column_name, val)
+    
+    def sort_by(self, column_name : str):
+        '''
+        Sort original data frame using values from passed column
+        '''
+
+        self.__df = self.__df.sort_values(by=column_name)
