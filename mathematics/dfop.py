@@ -17,6 +17,13 @@ def max_value(df: DataFrame, column_name : str):
 
     return df[column_name].max()
 
+def get_val_from_index(df : DataFrame, column_name : str ,index : int):
+    '''
+    Return index row value from passed column
+    '''
+
+    return df[column_name].iloc[index]
+
 def segment(df : DataFrame,initial_index : int, final_index : int) -> DataFrame:
     '''
     Segment data frame from *initial_index* to *final_index* and return it
@@ -92,3 +99,12 @@ class DataRange:
         '''
         
         return max_value(self.__df,column_name)
+    
+    def get_value(self, column_name : str, index : int):
+        '''
+        Return index value from column name
+        '''
+
+        return get_val_from_index(self.__df,column_name,index)
+    
+    
