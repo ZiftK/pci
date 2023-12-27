@@ -10,6 +10,13 @@ def min_value(df : DataFrame, column_name : str):
 
     return df[column_name].min()
 
+def max_value(df: DataFrame, column_name : str):
+    '''
+    Return max value from column in data frame
+    '''
+
+    return df[column_name].max()
+
 def segment(df : DataFrame,initial_index : int, final_index : int) -> DataFrame:
     '''
     Segment data frame from *initial_index* to *final_index* and return it
@@ -79,4 +86,9 @@ class DataRange:
 
         return min_value(self.__df,column_name)
 
-    
+    def max_val_from(self, column_name : str):
+        '''
+        Return max value from specfyc column
+        '''
+        
+        return max_value(self.__df,column_name)
