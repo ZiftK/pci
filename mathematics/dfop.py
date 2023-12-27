@@ -2,6 +2,8 @@
 from pandas import read_csv, concat
 from pandas import DataFrame, Series
 
+from numpy import arange
+
 
 def min_value(df : DataFrame, column_name : str):
     '''
@@ -120,3 +122,36 @@ class DataRange:
         '''
 
         self.__df = self.__df.sort_values(by=column_name)
+
+    @DeprecationWarning
+    def normalize(self,normal = None):
+        '''
+        Flat dynamic data frame using normal as difference value
+        '''
+        if normal == None:# If optional normal is null
+            normal = self.__mean_diff # set normal to data frame mean diff
+        
+        #set initial value to iterate
+        initial = self.__df["x"][self.__li]
+        #set final value to iterate
+        final = self.__df["x"][self.__ls] + normal
+        
+        #index to insert new predict value
+        insert_index = 0
+        
+        #init new data frame
+        df = self.__df.copy()
+        
+        #iterate throgth init range
+        for x in arange(initial,final,normal):
+            
+            if not x in self.__df["x"]:# if predict value is not in static data frame
+                
+                y = self.predict(x)
+                insert(df,"x",insert_index,x)
+                self.__ddf["y"][insert_index] = y
+                
+            insert_index += 1
+        
+        #set static data frame to new data
+        self.__df = df
