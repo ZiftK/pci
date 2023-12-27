@@ -3,6 +3,12 @@ from pandas import read_csv, concat
 from pandas import DataFrame, Series
 
 
+def min_value(df : DataFrame, column_name : str):
+    '''
+    Return min valuue from column in data frame
+    '''
+
+    return df[column_name].min()
 
 def segment(df : DataFrame,initial_index : int, final_index : int) -> DataFrame:
     '''
@@ -66,5 +72,11 @@ class DataRange:
         '''
         return segment(self.__df,initial_index,final_index)
     
+    def min_val_from(self, column_name : str):
+        '''
+        Return min value from specifyc column
+        '''
+
+        return min_value(self.__df,column_name)
 
     
