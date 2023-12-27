@@ -59,43 +59,12 @@ class DataRange:
         else:# if param type are not data frame or string raise exception
             raise TypeError("A data frame or string path are expected")
         
-
-        self.__ci = None #upper effective limit
-        self.__cs = None #lower effective limit
-        self.__edf = None # effective data frame
-        self.__exp = None # resolve exponents
+    
+    def extract_df(self, initial_index : int, final_index : int):
+        '''
+        Return a sub data frame from original data frame, from initial to final index
+        '''
+        return segment(self.__df,initial_index,final_index)
     
 
-    def __calc_exp(self):
-        '''
-        Calculate exponents array
-        '''
-        self.__exp = [x for x in range(0,len(self.__edf))]
-
-    @property
-    def ci(self):
-        '''
-        Return ci limit
-        '''
-        return self.__ci
     
-    @property
-    def cs(self):
-        '''
-        Return cs limit
-        '''
-        return self.__cs
-    
-    @property
-    def cis(self):
-        '''
-        Return ci and cs limit as tuple
-        '''
-        return self.__ci, self.__cs
-    
-    @property
-    def exp(self):
-        '''
-        Return exponents list
-        '''
-        return self.__exp
