@@ -102,6 +102,13 @@ class DataRange:
         
         return max_value(self.__df,column_name)
     
+    def get_mean_diff(self, column_name : str):
+        '''
+        Return the mean diff of data in data frame from specyfic column
+        '''
+
+        return mean_diff(self.__df, column_name)
+    
     def get_value(self, column_name : str, index : int):
         '''
         Return index value from column name

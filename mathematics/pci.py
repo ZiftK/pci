@@ -16,18 +16,30 @@ from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 
 class PCI:
 
-    def __init__(self, data, **kwargs) -> None:
-        
+    class ResolvePackage:
 
-        
-    
-        self.__coefficients = None
+        def __init__(self, data : dfop.DataFrame):
+            self.__df = dfop.DataRange(data)
+            self.__coef = None
+            pass
+
+    def __init__(self, data, **kwargs) -> None:
+        '''
+        PCI System was designed to predict values using data
+        '''
+
+        # initialize data ranges
+        self.__s_df = dfop.DataRange(data) # static data frame
+        self.__d_df = dfop.DataRange(data) # dynamic data frame
+
+        # initialize  coeficients
+        self.__s_coef = None # static coeficients
+        self.__d_coef = None # dynamic coeficients
 
         self.__offset = kwargs.get("offset",5)
         self.__rounder = kwargs.get("rounder",15)
-
-        self.__mean_diff = dfop.mean_diff(self.__df,"x")
         
+        # Testing variables
         self.__tst = None
         self.__tst2 = None
         
@@ -35,19 +47,14 @@ class PCI:
         '''
         Train system to specyfic effective data frame
         '''
+
+        exp = [n for n in range(0,len(edf))]
         self.__calc_exp(len(edf))
         self.__solve(edf)
         self.__clear()
         pass
-
-    def __calc_exp(self, degree):
-        '''
-        Calculate exponents with specyfic degree
-        '''
-        #calculate exponents
-        self.__exp = [n for n in range(0,degree)]
     
-    def __solve(self, edf : dfop.DataFrame):
+    def __solve(self, edf : dfop.DataFrame, exp : list):
         '''
         Train system to interpolate data (get polynomial)
 
@@ -61,7 +68,7 @@ class PCI:
 
         # evaluate each x value into each matrix function line
         for x in edf["x"]:
-            m.append(aop.valpow(  x,self.__exp))
+            m.append(aop.valpow(  x,exp))
         
         # ______ SOLVE ______
         m = matrix(m)
