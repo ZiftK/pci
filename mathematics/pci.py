@@ -140,15 +140,15 @@ class PCI:
         '''
         Apply polinomial solution to specyfic point
         '''
-        # #* make prediction
-        # #pow point to each value in exponents array
-        # a = aop.valpow(float(point),self.__exp)
-        # # multiply each value in solve point exponents 
-        # # to each value in solve coefficients
-        # pdct = aop.amult(self.__coefficients,a)
-        # self.__tst2 = pdct
-        # #return sum of array
-        # return sum(pdct)
+        #* make prediction
+        #pow point to each value in exponents array
+        a = aop.valpow(float(point),self.__exp)
+        # multiply each value in solve point exponents 
+        # to each value in solve coefficients
+        pdct = aop.amult(self.__coefficients,a)
+        self.__tst2 = pdct
+        #return sum of array
+        return sum(pdct)
     
     def predict(self,point):
         '''
@@ -157,32 +157,48 @@ class PCI:
         
         point = round(point,5)
 
-        # check if point is inside static effective data range or
-        # dynamic effective data range
-
-        # check if inside static data range
-        self.__ssp.is_inside_ef(point,"x")
-
         # is inside static limits
         in_static = self.__ssp.df.is_inside(point,"x")
 
-
-        print(f"{self.__df['x'][self.__ls]} -- {self.__df['x'][self.__li]}")
         while True: #* train loop
             # while will be breake it if
             # predict point is inside any range,
             # else, the system iterate throught dynamic
             # range to update it to point in it
 
-            # is inside dynamic limits 
-            in_dynamic = point < self.__ddf["x"][self.__ds] and point > self.__ddf["x"][self.__di]
+            # check if point is inside static effective data range or
+            # dynamic effective data range
 
-            if in_effective: #* if point is inside effective range
-                
-                break #break while
+            # check if inside static effective data range
+            if self.__ssp.is_inside_ef(point,"x"):
+                # if point is inside static effective data frame,
+                # is not necesary resolve coeficientes and exponents
+                # to new data range.
+
+                # pow point to each coeficient
+                a = aop.valpow(float(point),self.__ssp.coef)
+                # vector multiply to coeficients and powed values
+                pdct = aop.amult(self.__ssp.coef,a)
+                # return polinomial solution
+                return sum(pdct)
+
+            # check if inside dynamic effective data range
+            elif self.__dsp.is_inside_ef(point,"x"):
+                # if point is inside static effective data frame,
+                # is not necesary resolve coeficientes and exponents
+                # to new data range.
+
+                # pow point to each coeficient
+                a = aop.valpow(float(point),self.__dsp.coef)
+                # vector multiply to coeficients and powed values
+                pdct = aop.amult(self.__dsp.coef,a)
+                # return polinomial solution
+                return sum(pdct)
+
+            # is inside dynamic limits 
+            in_dynamic = self.__dsp.df.is_inside(point,"x")
 
             elif in_static: #* if point is inside n static range
-                self.__train_in_limits(self.__df,self.__li,self.__ls,point)
                 break #break while
             
 
