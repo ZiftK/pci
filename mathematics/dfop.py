@@ -102,6 +102,12 @@ class DataRange:
         
         return max_value(self.__df,column_name)
     
+    def is_inside(self, value, column_name : str):
+        '''
+        Check if value is inside data range of specifyc column
+        '''
+        return value < self.min_val_from(column_name) and value > self.max_val_from(column_name)
+    
     def get_mean_diff(self, column_name : str):
         '''
         Return the mean diff of data in data frame from specyfic column
