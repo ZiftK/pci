@@ -34,6 +34,20 @@ class SolvePackage:
         self.exp = None
         pass
 
+    def is_inside_ef(self, point, column_name : str):
+        '''
+        If point is inside effective range return true, else return false
+        '''
+        try:#try check if inside effective range
+            # is inside effecitve limits
+            return point >= self.df.get_value(column_name, self.le) and point <= self.df.get_value(column_name,self.ue)
+        except TypeError:
+            #if effective limits are null, set condition to false
+            return False
+        except KeyError:
+            return False
+        
+
 class PCI:
 
 
@@ -59,13 +73,16 @@ class PCI:
         '''
         Train system to specyfic effective data frame
         '''
+        self.__calc_exp(solve_package)
+        self.__solve(solve_package)
+        self.__clear(solve_package)
 
+    def __calc_exp(self,solve_package : SolvePackage):
+        '''
+        Calculate exponentes to solve data
+        '''
         # calculate exponents to solve data
         solve_package.exp = [n for n in range(0,len(solve_package.df))]
-
-        self.__solve(solve_package)
-        self.__clear()
-        pass
     
     def __solve(self, solve_package : SolvePackage):
         '''
@@ -140,17 +157,15 @@ class PCI:
         
         point = round(point,5)
 
-        # is inside static limits
-        in_static = point <= self.__df["x"][self.__ls] and point >= self.__df["x"][self.__li]
+        # check if point is inside static effective data range or
+        # dynamic effective data range
 
-        try:#try check if inside effective range
-            # is inside effecitve limits
-            in_effective = point < self.__df["x"][self.__cs] and point > self.__df["x"][self.__ci]
-        except TypeError:
-            #if effective limits are null, set condition to false
-            in_effective = False
-        except KeyError:
-            in_effective = False
+        # check if inside static data range
+        self.__ssp.is_inside_ef(point,"x")
+
+        # is inside static limits
+        in_static = self.__ssp.df.is_inside(point,"x")
+
 
         print(f"{self.__df['x'][self.__ls]} -- {self.__df['x'][self.__li]}")
         while True: #* train loop
