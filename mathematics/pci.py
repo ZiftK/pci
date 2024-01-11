@@ -73,14 +73,45 @@ class SolvePackage:
         return self.dr.extract_df(self.le,self.ue)
 
 class PCI:
+    '''
+    PCI (Polynomial with Coefficients Indeterminate) is a system 
+    that approximates real data without apparent correlation through
+    a Taylor series, a polynomial. This method requires the tabulation of data.
 
+    Limitations
+    -----------
+
+    - Currently, the PCI system only works with single-variable correlation. 
+    Its performance for multi-variable correlation is planned for the future.
+    
+    - The PCI system uses a large amount of memory to approximate values, 
+    so setting a high offset and consequently a wide effective range can lead 
+    to memory overflow.
+
+    Properties
+    ---------
+
+    data -> The 'data' entered into the PCI system must be in tabular form. 
+    Currently, a data frame or a path to extract it is supported. 
+    If another type of data or an incorrect path is entered, an exception will be raised
+
+    offset -> The 'offset' is the value used to control the amplitude of the effective range. 
+    For practical and technical reasons, the entered value will be doubled to generate the final amplitude.
+    **Important** This value will affect the accuracy of the final result.
+
+    rounder -> The 'rounder' value controls how many decimals are considered 
+    for calculations. Higher decimal precision incurs more computational cost. 
+    Once the final polynomial is obtained, all coefficients rounded to zero 
+    will be eliminated using 'rounder' as a parameter.
+    **Important** This value will affect the accuracy of the final result.
+
+    '''
 
     def __init__(self, data, **kwargs) -> None:
-        '''
-        PCI System was designed to predict values using data
-        '''
 
-        # initialize solve packages
+        # We initialize a SolvePackage for the data related 
+        # to the dynamic range and another one for the data
+        # related to the static range
         self.__ssp = SolvePackage(data)
         self.__dsp = SolvePackage(data)
 
@@ -95,18 +126,42 @@ class PCI:
         
     def __train(self, solve_package: SolvePackage):
         '''
-        Train system to specyfic effective data frame
+        Train system to selected solve package
         '''
-        self.__calc_exp(solve_package)
-        self.__solve(solve_package)
-        self.__clear(solve_package)
+
+        # The system training takes place in three steps: 
+        # calculating exponents, 
+        # solving coefficients, 
+        # and cleaning coefficients
+
+        # Because the system can be trained in the dynamic or static range,
+        # and each of these ranges contains its effective range,
+        # SolvePackages are used to encapsulate all the variables
+        # and functionalities of each super range (static and dynamic).
+        # This SolvePackage is then passed as a parameter to each training phase.
+        # This way, we can independently control in each training phase in which
+        # super range the system is being trained.
+
+        self.__calc_exp(solve_package) # calculating exponents
+        self.__solve(solve_package) # solving coefficients
+        self.__clear(solve_package) # cleaning coefficients
 
     def __calc_exp(self,solve_package : SolvePackage):
         '''
-        Calculate exponentes to solve data
+        Calculate the exponents used in the solution polynomial
         '''
 
-        # calculate exponents to solve data
+        # The exponents are calculated using the length of the effective 
+        # range as a parameter. A list of exponents is computed,
+        # where each value represents the exponent of a term in the final 
+        # polynomial (it represents the dimension of the monomial)
+
+        #The super range contained in the assigned SolvePackage is used,
+        # allowing us to obtain the exponents within the specifically
+        # defined effective range for the point to be approximated.
+        # If the point is within the static range, the static SolvePackage
+        # will be used; otherwise, the dynamic one will be used
+
         solve_package.exp = [n for n in range(0,len(solve_package.extract_ef_df()))]
     
     def __solve(self, solve_package : SolvePackage):
