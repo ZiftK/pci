@@ -65,6 +65,12 @@ class SolvePackage:
         except KeyError:
             return False
         
+    def extract_ef_df(self):
+        '''
+        Uses the effective lower and upper limits to extract 
+        the data frame within the effective range.
+        '''
+        return self.dr.extract_df(self.le,self.ue)
 
 class PCI:
 
