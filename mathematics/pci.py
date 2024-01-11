@@ -16,7 +16,26 @@ from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 
 class SolvePackage:
     '''
-    Packing resolve data variables
+    The Resolution Package is a class designed to encapsulate a range of 
+    data along with its corresponding limits and values used in the PCI approximation. 
+    Essentially, it is a class that enables PCI to locate the values of its dynamic or static data.
+
+    Properties
+    ---------
+
+    df -> It refers to the feeding DataRange. From this DataRange, 
+    the data for the approximation will be taken.
+
+    le -> Effective Lower Limit [PCI Method].
+
+    ue -> Effective Upper Limit [PCI Method].
+
+    coef -> Coefficients obtained within the interval defined 
+    by the effective lower limit and the effective upper limit [PCI Method].
+
+    exp -> Exponents obtained within the interval defined 
+    by the effective lower limit and the effective upper limit [PCI Method].
+
     '''
 
     def __init__(self, data : dfop.DataFrame):
@@ -25,14 +44,13 @@ class SolvePackage:
         self.df = dfop.DataRange(data)
 
         # effective limits
-        self.le = None # lower effective limit
-        self.ue = None # upper effective limit
+        self.le = None # effective lower limit
+        self.ue = None # effective upper limit
 
         # coeficients to save data range solution
         self.coef = None
         # exponentes to save data range solution
         self.exp = None
-        pass
 
     def is_inside_ef(self, point, column_name : str):
         '''
@@ -136,19 +154,55 @@ class PCI:
 
 
         
-    def __apply_pol(self,point):
+    def __apply_pol(self,point, solve_package : SolvePackage):
         '''
         Apply polinomial solution to specyfic point
         '''
         #* make prediction
         #pow point to each value in exponents array
-        a = aop.valpow(float(point),self.__exp)
+        a = aop.valpow(float(point),solve_package.exp)
         # multiply each value in solve point exponents 
         # to each value in solve coefficients
-        pdct = aop.amult(self.__coefficients,a)
-        self.__tst2 = pdct
+        pdct = aop.amult(solve_package.coef,a)
         #return sum of array
         return sum(pdct)
+    
+    def __update_dynamic(self):
+        
+        # init predict point
+        predict_point = None
+        # aux values
+        limit = None
+        step = None
+        df_0 = None
+        
+        #* predict one step outside dynamic range
+        # if point is left to dynamic range
+        if point < self.__df["x"][self.__di]:
+            # set limit as lower dynamic limit
+            limit = self.__di
+            # set step as negative mean diff
+            step = -1*(0.1) #!Valor experimental
+            pass
+        
+        # if point is right to dynamic range
+        else:
+            # set limit as upper dynamic limit
+            limit = self.__ds
+            # set step as mean diff
+            step = 0.1 #!Valor experimental
+            pass
+        
+        # apply point prediction with outside step
+        predict_point = self.__ddf["x"][limit] + step
+        # get extrapolation value
+        extrapol_val = self.__apply_pol(predict_point)
+        # create new data frame
+        df_0 = dfop.DataFrame({"x":[predict_point],"y":[extrapol_val]})
+        # concat order
+        concat = [df_0,self.__ddf] if point < self.__df["x"][self.__di] else [self.__ddf,df_0]
+        # concat data frames
+        self.__ddf = dfop.concat(concat, axis=0, ignore_index=True)
     
     def predict(self,point):
         '''
@@ -156,105 +210,37 @@ class PCI:
         '''
         
         point = round(point,5)
+        
+        # check if point is inside static effective data range or
+        # dynamic effective data range
 
+        # check if inside static effective data range
+        if self.__ssp.is_inside_ef(point,"x"):
+            return self.__apply_pol(point,self.__ssp)
+
+        # check if inside dynamic effective data range
+        elif self.__dsp.is_inside_ef(point,"x"):
+            return self.__apply_pol(point,self.__dsp)
+        
         # is inside static limits
-        in_static = self.__ssp.df.is_inside(point,"x")
+        elif self.__ssp.df.is_inside(point,"x"):
+
+            #train system inside static limits
+            self.__train(self.__ssp)
+
+            # apply polinomial solution to static solve package
+            return self.__apply_pol(point,self.__ssp)
 
         while True: #* train loop
-            # while will be breake it if
-            # predict point is inside any range,
-            # else, the system iterate throught dynamic
-            # range to update it to point in it
 
-            # check if point is inside static effective data range or
-            # dynamic effective data range
 
-            # check if inside static effective data range
-            if self.__ssp.is_inside_ef(point,"x"):
-                # if point is inside static effective data frame,
-                # is not necesary resolve coeficientes and exponents
-                # to new data range.
-
-                # pow point to each coeficient
-                a = aop.valpow(float(point),self.__ssp.coef)
-                # vector multiply to coeficients and powed values
-                pdct = aop.amult(self.__ssp.coef,a)
-                # return polinomial solution
-                return sum(pdct)
-
-            # check if inside dynamic effective data range
-            elif self.__dsp.is_inside_ef(point,"x"):
-                # if point is inside static effective data frame,
-                # is not necesary resolve coeficientes and exponents
-                # to new data range.
-
-                # pow point to each coeficient
-                a = aop.valpow(float(point),self.__dsp.coef)
-                # vector multiply to coeficients and powed values
-                pdct = aop.amult(self.__dsp.coef,a)
-                # return polinomial solution
-                return sum(pdct)
-
-            # is inside dynamic limits 
             in_dynamic = self.__dsp.df.is_inside(point,"x")
-
-            elif in_static: #* if point is inside n static range
+                
+            if in_dynamic: #* if point is in dynamic range
+                
+                self.__train(self.__dsp)
+                return self.__apply_pol(point,self.__dsp)
                 break #break while
-            
-
-            else: #* else
-                # if point is outside effective and static ranges,
-                # should be inside or outside dynamic range, wathever
-                # system train it in dynamiic range
-
-                # train in dinamic range
-                self.__train_in_limits(self.__ddf,self.__di,self.__ds,point)
-                
-                if in_dynamic: #* if point is in dynamic range
-                    
-                    break #break while
-                
-                # init predict point
-                predict_point = None
-                # aux values
-                limit = None
-                step = None
-                df_0 = None
-                
-                #* predict one step outside dynamic range
-                # if point is left to dynamic range
-                if point < self.__df["x"][self.__di]:
-                    # set limit as lower dynamic limit
-                    limit = self.__di
-                    # set step as negative mean diff
-                    step = -1*(0.1) #!Valor experimental
-                    pass
-                
-                # if point is right to dynamic range
-                else:
-                    # set limit as upper dynamic limit
-                    limit = self.__ds
-                    # set step as mean diff
-                    step = 0.1 #!Valor experimental
-                    pass
-                
-                # apply point prediction with outside step
-                predict_point = self.__ddf["x"][limit] + step
-                # get extrapolation value
-                extrapol_val = self.__apply_pol(predict_point)
-                # create new data frame
-                df_0 = dfop.DataFrame({"x":[predict_point],"y":[extrapol_val]})
-                # concat order
-                concat = [df_0,self.__ddf] if point < self.__df["x"][self.__di] else [self.__ddf,df_0]
-                # concat data frames
-                self.__ddf = dfop.concat(concat, axis=0, ignore_index=True)
-                
-                pass
-        
-        
-        return self.__apply_pol(point)
-    
-    
     
     
     def __str__(self):
