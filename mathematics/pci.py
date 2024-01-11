@@ -210,9 +210,11 @@ class PCI:
         out_val = self.__apply_pol(in_val + step,self.__dsp)
 
         # insert value in selected index
-        
+        self.__dsp.dr.insert(indx,in_val + step,"x")
 
-        
+        # set value in "y" column (aproximate value)
+        self.__dsp.dr.set_value(indx,out_val,"y")
+
 
     
     def predict(self,point):

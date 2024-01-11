@@ -59,7 +59,11 @@ def mean_diff(df : DataFrame, column_name : str)-> float:
 
 def insert(df: DataFrame,column_name : str, index : int, value : float):
     '''
-    
+    Adds a row with the specified index, shifting the replacement 
+    row and all others to the right.
+
+    The specified value will be assigned to the specified column; 
+    all other columns will have a default value.
     '''
 
     # Inserta el valor 6 en la fila 2 de la columna y desplaza los valores hacia abajo
@@ -81,7 +85,17 @@ class DataRange:
         else:# if param type are not data frame or string raise exception
             raise TypeError("A data frame or string path are expected")
         
-    
+    def insert(self, index, value, column_name):
+        '''
+        Adds a row with the specified index, shifting the replacement 
+        row and all others to the right.
+
+        The specified value will be assigned to the specified column; 
+        all other columns will have a default value.
+        '''
+
+        insert(self.__df,column_name,index,value)
+
     def extract_df(self, initial_index : int, final_index : int):
         '''
         Return a sub data frame from original data frame, from initial to final index
