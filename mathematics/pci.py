@@ -105,11 +105,9 @@ class PCI:
         '''
         Calculate exponentes to solve data
         '''
-        #TODO: falta corregir, se está tomando la longitud del data range, cuando debería
-        #todo: tomarse la diferencia entre los límites inferior y superior para calcular los
-        #todo: exponentes
+
         # calculate exponents to solve data
-        solve_package.exp = [n for n in range(0,len(solve_package.dr.))]
+        solve_package.exp = [n for n in range(0,len(solve_package.extract_ef_df()))]
     
     def __solve(self, solve_package : SolvePackage):
         '''
@@ -124,14 +122,14 @@ class PCI:
         m = list()
 
         # evaluate each x value into each matrix function line
-        for x in solve_package.dfq["x"]:
+        for x in solve_package.dr.extract_df()["x"]:
             m.append(aop.valpow(  x, solve_package.exp))
         
         # ______ SOLVE ______
         m = matrix(m)
 
         # save coefficients
-        solve_package.coef = linalg.solve(m, array(solve_package.df["y"]))
+        solve_package.coef = linalg.solve(m, array(solve_package.extract_ef_df()["y"]))
         solve_package.coef = round(solve_package.coef,self.__rounder)
 
     def __clear(self, solve_package : SolvePackage):
@@ -223,7 +221,7 @@ class PCI:
 
 
     
-    def predict(self,point):
+    def predict(self,point,ep_step = 0.5):
         '''
         Get aprox value from trained system
         '''
@@ -241,7 +239,7 @@ class PCI:
         elif self.__dsp.is_inside_ef(point,"x"):
             return self.__apply_pol(point,self.__dsp)
         
-        # is inside static limits
+        # it is inside static limits?
         elif self.__ssp.dr.is_inside(point,"x"):
 
             #train system inside static limits
@@ -252,14 +250,28 @@ class PCI:
 
         while True: #* train loop
 
+            # It has been previously verified that the point to approximate 
+            # is outside the dynamic effective range and the 
+            # static effective range. It has also been confirmed to be 
+            # outside the static range, so the only available options are 
+            # that it is within the dynamic range or it is outside all ranges.
 
+            # check if point is inside dynamic range
             in_dynamic = self.__dsp.dr.is_inside(point,"x")
-                
+            
             if in_dynamic: #* if point is in dynamic range
                 
+                # train system in dynamic solve package
                 self.__train(self.__dsp)
+                # apply polinomial solution to dynamic solve package
                 return self.__apply_pol(point,self.__dsp)
                 break #break while
+            
+            # In case the point is outside the dynamic range, 
+            # the dynamic range should be updated by providing 
+            # feedback until the desired value is reached; 
+            # this is done by the update_dynamic function
+            self.__update_dynamic(point,ep_step)
     
     
     def __str__(self):
