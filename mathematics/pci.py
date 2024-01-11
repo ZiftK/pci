@@ -166,46 +166,46 @@ class PCI:
     
     def __solve(self, solve_package : SolvePackage):
         '''
-        Train system to interpolate data (get polynomial)
-
-        Returns
-        -------
-        None.
-
+        Approximate the coefficients of the solution polynomial
         '''
-        # matrix to resolve
+        # To approximate the coefficients, it is necessary to solve a 
+        # matrix (n, n), where 'n' is the number of data points used
+        # for the approximation. The first step is to define this matrix
         m = list()
 
-        # evaluate each x value into each matrix function line
+        # We subtract the effective data frame from the SolvePackage to
+        # be used and evaluate at each of the 'x' column values in their 
+        # respective rows.
         for x in solve_package.dr.extract_df()["x"]:
             m.append(aop.valpow(  x, solve_package.exp))
         
         # ______ SOLVE ______
+            
+        # Define 'm' as a NumPy matrix object
         m = matrix(m)
 
-        # save coefficients
+        # Solve the matrix using the 'y' column of the effective data frame
+        # as the expansion vector of the matrix
         solve_package.coef = linalg.solve(m, array(solve_package.extract_ef_df()["y"]))
+
+        # Round each polynomial coefficient using the rounder value
         solve_package.coef = round(solve_package.coef,self.__rounder)
 
     def __clear(self, solve_package : SolvePackage):
         '''
-        Delete Monomials with despicable coeficients
-
-        Returns
-        -------
-        None.
-
+        Delete Monomials with negligible coeficients from solution
         '''
         
-        # Index list to delete
+        # In this list, the indices of each negligible coefficient
+        # will be stored to delete them from the coefficients list
         del_index = list()
         
-        # get index of despicable coeficients
-        # iterate throught each round coeficient and get his index
+        # get index of negligible coeficients
+        # iterate throught each round coeficient and get its index
         # for delete to polynomial
         for index, coef in enumerate(solve_package.coef):
             
-            # add index with despicable coeficients
+            # add index with negligible coeficients
             if coef == 0:
                 
                 del_index.append(index)
@@ -230,7 +230,9 @@ class PCI:
         return sum(pdct)
     
     def __update_dynamic(self,point,step = 0.5):
-
+        '''
+        
+        '''
         step = abs(step)
 
         # last inside value
