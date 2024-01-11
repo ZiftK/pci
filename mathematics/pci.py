@@ -41,7 +41,7 @@ class SolvePackage:
     def __init__(self, data : dfop.DataFrame):
 
         # data range object
-        self.df = dfop.DataRange(data)
+        self.dr = dfop.DataRange(data)
 
         # effective limits
         self.le = None # effective lower limit
@@ -99,8 +99,11 @@ class PCI:
         '''
         Calculate exponentes to solve data
         '''
+        #TODO: falta corregir, se está tomando la longitud del data range, cuando debería
+        #todo: tomarse la diferencia entre los límites inferior y superior para calcular los
+        #todo: exponentes
         # calculate exponents to solve data
-        solve_package.exp = [n for n in range(0,len(solve_package.df))]
+        solve_package.exp = [n for n in range(0,len(solve_package.dr.))]
     
     def __solve(self, solve_package : SolvePackage):
         '''
@@ -167,42 +170,50 @@ class PCI:
         #return sum of array
         return sum(pdct)
     
-    def __update_dynamic(self):
-        
-        # init predict point
-        predict_point = None
-        # aux values
-        limit = None
-        step = None
-        df_0 = None
-        
-        #* predict one step outside dynamic range
-        # if point is left to dynamic range
-        if point < self.__df["x"][self.__di]:
-            # set limit as lower dynamic limit
-            limit = self.__di
-            # set step as negative mean diff
-            step = -1*(0.1) #!Valor experimental
-            pass
-        
-        # if point is right to dynamic range
+    def __update_dynamic(self,point,step = 0.5):
+
+        step = abs(step)
+
+        # last inside value
+        in_val = None
+        # outside range value
+        out_val = None
+        # insert index 
+        indx = None
+
+        if point < self.__dsp.dr.get_value("x",0):
+            step *= -1
+
+            # set effective lower limit and effective upper limit to the left
+            self.__dsp.le = 0
+            self.__dsp.ue = 2*self.__offset
+
+            # set last inside value as 
+            in_val = self.__dsp.dr.get_value("x",self.__dsp.le)
+
         else:
-            # set limit as upper dynamic limit
-            limit = self.__ds
-            # set step as mean diff
-            step = 0.1 #!Valor experimental
-            pass
+            # It has already been verified that the point 
+            # is not within the dynamic range, so if it is 
+            # also not found on the left, the only possible 
+            # option is that it is located on the right.
+
+            # set effective lower limit and effective upper limit to the right
+            self.__dsp.ue = self.__dsp.dr.rows_count() - 1
+            self.__dsp.le = self.__dsp.ue - 2*self.__offset
+
+            in_val = self.__dsp.dr.get_value("x",self.__dsp.ue)
+
+        # train system
+        self.__train(self.__dsp)
+
+        # approximate the value outside the dynamic range using the dynamic SolvePackage
+        out_val = self.__apply_pol(in_val + step,self.__dsp)
+
+        # insert value in selected index
         
-        # apply point prediction with outside step
-        predict_point = self.__ddf["x"][limit] + step
-        # get extrapolation value
-        extrapol_val = self.__apply_pol(predict_point)
-        # create new data frame
-        df_0 = dfop.DataFrame({"x":[predict_point],"y":[extrapol_val]})
-        # concat order
-        concat = [df_0,self.__ddf] if point < self.__df["x"][self.__di] else [self.__ddf,df_0]
-        # concat data frames
-        self.__ddf = dfop.concat(concat, axis=0, ignore_index=True)
+
+        
+
     
     def predict(self,point):
         '''
@@ -223,7 +234,7 @@ class PCI:
             return self.__apply_pol(point,self.__dsp)
         
         # is inside static limits
-        elif self.__ssp.df.is_inside(point,"x"):
+        elif self.__ssp.dr.is_inside(point,"x"):
 
             #train system inside static limits
             self.__train(self.__ssp)
@@ -234,7 +245,7 @@ class PCI:
         while True: #* train loop
 
 
-            in_dynamic = self.__dsp.df.is_inside(point,"x")
+            in_dynamic = self.__dsp.dr.is_inside(point,"x")
                 
             if in_dynamic: #* if point is in dynamic range
                 

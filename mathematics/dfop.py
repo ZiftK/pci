@@ -136,6 +136,12 @@ class DataRange:
 
         self.__df = self.__df.sort_values(by=column_name)
 
+    def rows_count(self):
+        '''
+        Return rows count
+        '''
+        return len(self.__df)
+    
     @DeprecationWarning
     def normalize(self,normal = None):
         '''
