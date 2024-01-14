@@ -1,13 +1,4 @@
-import threading
 
-import pyautogui
-
-
-
-def click_100_times(val):
-    for i in range(val):
-        t = threading.Timer(0.01, pyautogui.click)
-        t.start()
 
 
 
