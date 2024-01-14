@@ -6,30 +6,20 @@ Created on Mon Oct 23 17:14:46 2023
 """
 
 
-
+import dfop
 import logging as lg
 import aop 
-import dfop
 
 from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 
 
 class PCI:
 
-    def __init__(self, data, **kwargs) -> None:
+    def __init__(self, data_path, **kwargs) -> None:
         
 
-        if type(data) == str:
-            # *Get data frames
-            self.__df = dfop.read_csv(data) # static data frame
-            
-
-        elif type(data) == dfop.DataFrame:
-            self.__df = data
-
-        else:
-            raise Exception("Invalid data type. Must be string path or pandas data frame.")
-
+        # *Get data frames
+        self.__df = dfop.read_csv(data_path) # static data frame
         self.__ddf = self.__df.copy() # dynamic data frame
 
         #* Static limits
@@ -50,14 +40,6 @@ class PCI:
         #* Static effective limits
         self.__sci = None # loweer limit
         self.__scs = None # upper limit
-
-        #* Dynamic calc values
-        self.__dcoefficients = None # dynamic coefficients
-        self.__dexp = None  # dynamic exponents
-
-        #* Static calc values
-        self.__scoefficients = None
-        self.__sexp = None
 
         self.__coefficients = None
         self.__exp = None
@@ -158,7 +140,6 @@ class PCI:
 
         #* train in effective data frame
         self.__train(edf)
-
         
     def __apply_pol(self,point):
         '''
@@ -170,7 +151,6 @@ class PCI:
         # multiply each value in solve point exponents 
         # to each value in solve coefficients
         pdct = aop.amult(self.__coefficients,a)
-        self.__tst2 = pdct
         #return sum of array
         return sum(pdct)
     
@@ -178,19 +158,17 @@ class PCI:
         '''
         Get aprox value from trained system
         '''
-        
         point = round(point,5)
-        print(point)
         # is inside static limits
-        in_static = point <= self.__df["x"][self.__ls] and point >= self.__df["x"][self.__li]
+        in_static = point < self.__df["x"][self.__ls] and point > self.__df["x"][self.__li]
 
-        print(f"{self.__df['x'][self.__ls]} -- {self.__df['x'][self.__li]}")
+        
         while True: #* train loop
             # while will be breake it if
             # predict point is inside any range,
             # else, the system iterate throught dynamic
             # range to update it to point in it
-
+            
             # is inside dynamic limits 
             in_dynamic = point < self.__ddf["x"][self.__ds] and point > self.__ddf["x"][self.__di]
 
@@ -205,11 +183,11 @@ class PCI:
                 
             
             if in_effective: #* if point is inside effective range
-                
+                print("effective")
                 break #break while
 
             elif in_static: #* if point is inside n static range
- 
+                
                 self.__train_in_limits(self.__df,self.__li,self.__ls,point)
                 break #break while
             
@@ -309,178 +287,7 @@ class PCI:
             string += f"{self.__coefficients[index]}*x^{self.__exp[index]}"
             string += "" if index == len(self.__coefficients)-1 else "+"
         return string.replace("e", "*10^")
-
-def pcit_ov(data, offset_range, rounder, values_range)-> dict:
-    '''
-    Iterate through the offset range
-    and set the PCI system for each offset in the range. 
-    Then, approximate each value in the values range using each 
-    one of the offsets set
-    '''
-
-    # aprox_values is a dictionary that stores numpy arrays. 
-    # This is because for each offset in the offset range, a 
-    # list of approximate values will be calculated.
-    # Each key of the ‘aprox_values’ dictionary represents 
-    # the offset that will be calculated, and its content 
-    # represents the output PCI predicted values from the 
-    # ‘values_range’ as inputs.
-
-    aprox_values : dict = dict() # aproximate values dictionary
-    current_values : list = list() # ccurrent PCI predicted values for each step
-
-    # iterate throught offset range.
-    # For each offset in 'offset_range'
-    # a list of PCI predicted values will
-    # be calculate.
-    for current_off in offset_range: 
-
-        # debug message
-        print(f"\n\nPCI offset variable** current offset: {current_off}")
-
-        # init pci system with offset as current offset
-        pcys = PCI(data, rounder = rounder, offset = current_off)
-        
-        # iterate throught values range.
-        # For each value in the ‘values_range’, 
-        # a PCI predicted value will be calculated.
-        for value in values_range: 
-
-            print(f"\t current value: {value}")
-
-            # aproximate values
-            current_values.append(pcys.predict(value))
-
-        # vectorize and save values
-        aprox_values[current_off] = array(current_values)
-
-        # clear current values
-        current_values.clear()
-
-        del pcys # delete pci system
-
-    return aprox_values # return aproximate values
-
-def pcit_rv(data, offset, rounder_range, values_range)-> dict:
-    '''
-    Iterate through the rounder range and set the PCI
-    system for each rounder in the range. Then, aproximate
-    each value in the values range using each one of the
-    rounder set
-    '''
-
-    aprox_values : dict = dict() # aproximate values dictionary
-    current_values : list = list() 
-
-    for current_round in rounder_range: # iterate throught offset range
-
-        # debug message
-        print(f"\n\nPCI rounder variable** current round: {current_round}")
-
-        # init pci system
-        pcys = PCI(data,rounder = current_round, offset = offset)
-
-        for value in values_range: # iterate throught values range
-
-            print(f"\t current value: {value}")
-
-            # aproximate values
-            current_values.append(pcys.predict(value))
-
-        # vectorize values and save it
-        aprox_values[current_round] = array(current_values)
-
-        # clear current values
-        current_values.clear()
-
-        del pcys # delete pci system
-
-    return aprox_values # return aproximate values
-
-def relative_error(real_val,aprox_val):
-    '''
-    Calculate relative error from real value and his aproximate value
-    '''
-    return 100*abs((real_val-aprox_val)/real_val)
-
-def compare(data, real_function,values_range, offset, rounder):
-
-    # sp: ------------- Vars -------------
-
-    # variables to set pci evaluate function
-    offset_iter, rounder_iter = True, True
-    # pci evaluate function
-    pci_func = None
-    # real function values
-    real_values = list()
-    # aproximate pci values
-    aprox_values = list()
-    # relative error
-    error = 0
-    # errors dictionary
-    error_dict = dict()
-
-    # sp: ------------- Check iterables -------------
-
-    try:# check if offset is iterable
-        iter(offset)
-    except TypeError:# save it
-        offset_iter = False
-
-    try:# chacj if rounder is iterable
-        iter(rounder) 
-    except TypeError:# save it
-        rounder_iter = False
-
-    # Check whether offset or rounder is iterable because the 
-    # function only supports one of the two being iterable
-
-    # sp: ------------- Def pci function -------------
-
-    # if offset is iterable and rounder is not
-    if offset_iter and not rounder_iter:
-
-        # set pci evaluate function as pci offset variable
-        pci_func = pcit_ov
-
-    # if rounder is iterable and offset is not
-    elif rounder_iter and not offset_iter:
-
-        # set pci evaluate function as pci rounder variable
-        pci_func = pcit_rv
-    else:
-        raise Exception("Offset and rounder cant vary at the same time")
-    
-    # sp: ------------- Calculate values -------------
-
-    # calculate aprox values
-    aprox_values = pci_func(data, offset,rounder,values_range)
-
-    #* Calculate real values
-    for value in values_range:
-        real_values.append(real_function(value))
-
-    #sp: ------------- Calculate error -------------
-
-    # vectorice lists
-    real_values =  array(real_values)
-
-    for key in aprox_values.keys():
-        error = relative_error(real_values,aprox_values[key])
-        error_dict[key] = error
-
-
-
-    return error_dict
-
-
-
 if __name__ == "__main__":
     
-    try:
-        iter(2)
-        print("iterable")
-    except TypeError:
-        print("no iterable")
     
     pass
