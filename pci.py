@@ -126,7 +126,7 @@ class SolvePackage:
 
         self.exp = [n for n in range(0,len(self.extract_ef_df()))]
     
-    def __solve(self):
+    def __solve(self,rounder):
         '''
         Approximate the coefficients of the solution polynomial
         '''
@@ -139,7 +139,7 @@ class SolvePackage:
         # be used and evaluate at each of the 'x' column values in their 
         # respective rows.
         for x in self.extract_ef_df()["x"]:
-            m.append(aop.valpow(  x, self.exp))
+            m.append(aop.valpow(  x, self.__exp))
         
         # ______ SOLVE ______
             
@@ -148,10 +148,10 @@ class SolvePackage:
 
         # Solve the matrix using the 'y' column of the effective data frame
         # as the expansion vector of the matrix
-        self.coef = linalg.solve(m, array(self.extract_ef_df()["y"]))
+        self.__coef = linalg.solve(m, array(self.extract_ef_df()["y"]))
 
         # Round each polynomial coefficient using the rounder value
-        self.coef = round(self.coef,self.__rounder)
+        self.__coef = round(self.__coef,rounder)
 
     def __clear(self):
         '''
