@@ -44,8 +44,8 @@ class SolvePackage:
         self.dr = dfop.DataRange(data)
 
         # effective limits
-        self.le = None # effective lower limit
-        self.ue = None # effective upper limit
+        self.__le = None # effective lower limit
+        self.__ue = None # effective upper limit
 
         # coeficients to save data range solution
         self.coef = None
@@ -71,6 +71,18 @@ class SolvePackage:
         the data frame within the effective range.
         '''
         return self.dr.extract_df(self.le,self.ue)
+    
+
+    #hd: Properties
+
+    @property
+    def le(self):
+        return self.le
+    
+    @le.setter
+    def le(self,value):
+        aux = max(0,value)
+        aux = min(value,)
 
 class PCI:
     '''
