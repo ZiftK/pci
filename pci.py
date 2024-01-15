@@ -80,7 +80,7 @@ class SolvePackage:
 
     #hd: Train methods
 
-    def train(self,point,offset):
+    def train(self,point,offset,rounder):
         '''
         Train system to selected solve package around specified point
         '''
@@ -100,7 +100,7 @@ class SolvePackage:
 
         self.__calc_ef_limits(point,offset) # calculating effective limits
         self.__calc_exp() # calculating exponents
-        self.__solve() # solving coefficients
+        self.__solve(rounder) # solving coefficients
         self.__clear() # cleaning coefficients
 
     def __calc_ef_limits(self, point, offset):
@@ -146,7 +146,7 @@ class SolvePackage:
         # If the point is within the static range, the static SolvePackage
         # will be used; otherwise, the dynamic one will be used
 
-        self.exp = [n for n in range(0,len(self.extract_ef_df()))]
+        self.__exp = [n for n in range(0,len(self.extract_ef_df()))]
     
     def __solve(self,rounder):
         '''
@@ -379,7 +379,7 @@ class PCI:
         '''
         
         '''
-        solve_package.train(point,self.__offset)
+        solve_package.train(point,self.__offset,self.__rounder)
 
 
     def __update_dynamic(self,point,step = 0.5):
