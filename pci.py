@@ -176,7 +176,7 @@ class PCI:
         # We subtract the effective data frame from the SolvePackage to
         # be used and evaluate at each of the 'x' column values in their 
         # respective rows.
-        for x in solve_package.dr.extract_df()["x"]:
+        for x in solve_package.extract_ef_df()["x"]:
             m.append(aop.valpow(  x, solve_package.exp))
         
         # ______ SOLVE ______
