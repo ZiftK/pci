@@ -80,7 +80,7 @@ class SolvePackage:
 
     #hd: Train methods
 
-    def __train(self,point):
+    def __train(self,point,offset):
         '''
         Train system to selected solve package around specified point
         '''
@@ -98,6 +98,7 @@ class SolvePackage:
         # This way, we can independently control in each training phase in which
         # super range the system is being trained.
 
+        self.__calc_ef_limits(point,offset) # calculating effective limits
         self.__calc_exp() # calculating exponents
         self.__solve() # solving coefficients
         self.__clear() # cleaning coefficients
@@ -196,14 +197,120 @@ class SolvePackage:
         # This is done to generate polynomials as small as possible or to reduce noise
         self.__coef = delete(self.__coef,del_index)
         self.__exp = delete(self.__exp,del_index)
+
+
+    def update_data(self,point,offset, step = 0.5):
+        '''
+        Inserts a value outside the original data range, 
+        offset by a value defined by 'step' towards the approximation point
+        '''
+
+        #pass the 'step' parameter through the 'abs' function to avoid 
+        # using negative values (this would result in incorrect 
+        # calculations as it would change the direction 
+        # of the offset for extrapolation)
+        step = abs(step)
+
+        #Within this function, we only need to make one check.
+        # To avoid defining too much code within conditionals
+        # and with the intention of not repeating the same code too much,
+        # we generate three variables that will be set within the 
+        #conditionals to generalize the process using them.
+        # Thus, the extrapolation will change direction with
+        # the change of these variables
+
+        # *last inside value
+        # It refers to the nearest value to the desired extrapolation 
+        # within the dynamic range 
+        in_val = None
+
+        #* outside range value
+        # It refers to the new extrapolated value close to the dynamic range
+        out_val = None
+
+        #* insert index 
+        # It refers to the index where the new data will be inserted
+        indx = None
+
+        if point < self.__dr.get_value("x",0):
+
+            # If the extrapolation point is to the left of the dynamic dataset,
+            # we need to change the extrapolation direction. 
+            # We achieve this by changing the sign of the 'step' to negative,
+            # to decrease the extrapolation value
+            step *= -1
+
+            # The effective range should be set at the beginning of the dynamic
+            # range, so the effective lower limit should be the minimum (zero),
+            # while the effective upper limit should be twice the 'offset'
+            self.__le = 0
+            self.__ue = 2*offset
+
+            # In order to approximate a value outside the dynamic range, 
+            # we need to know the last value within the range in the direction
+            # of the extrapolation
+            in_val = self.__dr.get_value("x",self.__le)
+            
+            # To insert the new extrapolated value within the dynamic range,
+            # it is necessary to know on which side of the range it will be inserted.
+            # We do this by establishing the insertion index. In this case,
+            # the index is the effective lower limit, as the data is to the left
+            # of the dynamic range
+            indx = self.__le
+
+        else:
+            # It has already been verified that the point 
+            # is not within the dynamic range, so if it is 
+            # also not found on the left, the only possible 
+            # option is that it is located on the right.
+
+            # The effective range should be set at the end of
+            # the dynamic range, so the upper effective limit
+            # should be the maximum (max index in data), and
+            # the lower effective limit should be the maximum
+            # minus twice the 'offset'
+            self.__ue = self.__dr.rows_count() - 1
+            self.__le = self.__ue - 2*offset
+
+            # In order to approximate a value outside the dynamic range, 
+            # we need to know the last value within the range in the direction
+            # of the extrapolation
+            in_val = self.__dr.get_value("x",self.__ue)
+
+            # To insert the new extrapolated value within the dynamic range,
+            # it is necessary to know on which side of the range it will be inserted.
+            # We do this by establishing the insertion index. In this case,
+            # the index is the effective upper limit, as the data is to the right
+            # of the dynamic range
+            indx = self.__ue
+
+        # train system within dynamic range
+        self.__train(point,offset)
+
+
     
 
     #hd: Properties
 
     @property
     def le(self):
-        return self.le
+        return self.__le
     
+    @property
+    def ue(self):
+        return self.__ue
+
+    @property
+    def dr(self):
+        return self.__dr
+
+    @property
+    def coef(self):
+        return self.__coef
+
+    @property
+    def exp(self):
+        return self.__exp    
 
 
 class PCI:
