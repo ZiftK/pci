@@ -129,7 +129,8 @@ class PCI:
         Train system to selected solve package
         '''
 
-        # The system training takes place in three steps: 
+        # The system training takes place in four steps: 
+        # calculating effective limits
         # calculating exponents, 
         # solving coefficients, 
         # and cleaning coefficients
@@ -145,6 +146,12 @@ class PCI:
         self.__calc_exp(solve_package) # calculating exponents
         self.__solve(solve_package) # solving coefficients
         self.__clear(solve_package) # cleaning coefficients
+
+    def __calc_ef_limits(self, solve_package : SolvePackage, point):
+        '''
+        Calculate the effective limits for the SolvePackage using the specified point
+        '''
+
 
     def __calc_exp(self,solve_package : SolvePackage):
         '''
