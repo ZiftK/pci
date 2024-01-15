@@ -52,6 +52,9 @@ class SolvePackage:
         # exponentes to save data range solution
         self.exp = None
 
+
+    #hd: Aux methods
+    
     def is_inside_ef(self, point, column_name : str):
         '''
         If point is inside effective range return true, else return false
@@ -71,6 +74,105 @@ class SolvePackage:
         the data frame within the effective range.
         '''
         return self.dr.extract_df(self.le,self.ue)
+    
+
+    #hd: Train methods
+
+    def __train(self,point):
+        '''
+        Train system to selected solve package
+        '''
+
+        # calculating effective limits
+        # calculating exponents, 
+        # solving coefficients, 
+        # and cleaning coefficients
+
+        # Because the system can be trained in the dynamic or static range,
+        # and each of these ranges contains its effective range,
+        # SolvePackages are used to encapsulate all the variables
+        # and functionalities of each super range (static and dynamic).
+        # This SolvePackage is then passed as a parameter to each training phase.
+        # This way, we can independently control in each training phase in which
+        # super range the system is being trained.
+
+        self.__calc_exp() # calculating exponents
+        self.__solve() # solving coefficients
+        self.__clear() # cleaning coefficients
+
+    def __calc_ef_limits(self, point):
+        '''
+        Calculate the effective limits for the SolvePackage using the specified point
+        '''
+
+
+    def __calc_exp(self):
+        '''
+        Calculate the exponents used in the solution polynomial
+        '''
+
+        # The exponents are calculated using the length of the effective 
+        # range as a parameter. A list of exponents is computed,
+        # where each value represents the exponent of a term in the final 
+        # polynomial (it represents the dimension of the monomial)
+
+        #The super range contained in the assigned SolvePackage is used,
+        # allowing us to obtain the exponents within the specifically
+        # defined effective range for the point to be approximated.
+        # If the point is within the static range, the static SolvePackage
+        # will be used; otherwise, the dynamic one will be used
+
+        self.exp = [n for n in range(0,len(self.extract_ef_df()))]
+    
+    def __solve(self):
+        '''
+        Approximate the coefficients of the solution polynomial
+        '''
+        # To approximate the coefficients, it is necessary to solve a 
+        # matrix (n, n), where 'n' is the number of data points used
+        # for the approximation. The first step is to define this matrix
+        m = list()
+
+        # We subtract the effective data frame from the SolvePackage to
+        # be used and evaluate at each of the 'x' column values in their 
+        # respective rows.
+        for x in self.extract_ef_df()["x"]:
+            m.append(aop.valpow(  x, self.exp))
+        
+        # ______ SOLVE ______
+            
+        # Define 'm' as a NumPy matrix object
+        m = matrix(m)
+
+        # Solve the matrix using the 'y' column of the effective data frame
+        # as the expansion vector of the matrix
+        self.coef = linalg.solve(m, array(self.extract_ef_df()["y"]))
+
+        # Round each polynomial coefficient using the rounder value
+        self.coef = round(self.coef,self.__rounder)
+
+    def __clear(self):
+        '''
+        Delete Monomials with negligible coeficients from solution
+        '''
+        
+        # In this list, the indices of each negligible coefficient
+        # will be stored to delete them from the coefficients list
+        del_index = list()
+        
+        # get index of negligible coeficients
+        # iterate throught each round coeficient and get its index
+        # for delete to polynomial
+        for index, coef in enumerate(self.coef):
+            
+            # add index with negligible coeficients
+            if coef == 0:
+                
+                del_index.append(index)
+        
+        # This is done to generate polynomials as small as possible or to reduce noise
+        self.coef = delete(self.coef,del_index)
+        self.exp = delete(self.exp,del_index)
     
 
     #hd: Properties
@@ -136,102 +238,7 @@ class PCI:
         self.__tst = None
         self.__tst2 = None
         
-    def __train(self, solve_package: SolvePackage):
-        '''
-        Train system to selected solve package
-        '''
-
-        # The system training takes place in four steps: 
-        # calculating effective limits
-        # calculating exponents, 
-        # solving coefficients, 
-        # and cleaning coefficients
-
-        # Because the system can be trained in the dynamic or static range,
-        # and each of these ranges contains its effective range,
-        # SolvePackages are used to encapsulate all the variables
-        # and functionalities of each super range (static and dynamic).
-        # This SolvePackage is then passed as a parameter to each training phase.
-        # This way, we can independently control in each training phase in which
-        # super range the system is being trained.
-
-        self.__calc_exp(solve_package) # calculating exponents
-        self.__solve(solve_package) # solving coefficients
-        self.__clear(solve_package) # cleaning coefficients
-
-    def __calc_ef_limits(self, solve_package : SolvePackage, point):
-        '''
-        Calculate the effective limits for the SolvePackage using the specified point
-        '''
-
-
-    def __calc_exp(self,solve_package : SolvePackage):
-        '''
-        Calculate the exponents used in the solution polynomial
-        '''
-
-        # The exponents are calculated using the length of the effective 
-        # range as a parameter. A list of exponents is computed,
-        # where each value represents the exponent of a term in the final 
-        # polynomial (it represents the dimension of the monomial)
-
-        #The super range contained in the assigned SolvePackage is used,
-        # allowing us to obtain the exponents within the specifically
-        # defined effective range for the point to be approximated.
-        # If the point is within the static range, the static SolvePackage
-        # will be used; otherwise, the dynamic one will be used
-
-        solve_package.exp = [n for n in range(0,len(solve_package.extract_ef_df()))]
     
-    def __solve(self, solve_package : SolvePackage):
-        '''
-        Approximate the coefficients of the solution polynomial
-        '''
-        # To approximate the coefficients, it is necessary to solve a 
-        # matrix (n, n), where 'n' is the number of data points used
-        # for the approximation. The first step is to define this matrix
-        m = list()
-
-        # We subtract the effective data frame from the SolvePackage to
-        # be used and evaluate at each of the 'x' column values in their 
-        # respective rows.
-        for x in solve_package.extract_ef_df()["x"]:
-            m.append(aop.valpow(  x, solve_package.exp))
-        
-        # ______ SOLVE ______
-            
-        # Define 'm' as a NumPy matrix object
-        m = matrix(m)
-
-        # Solve the matrix using the 'y' column of the effective data frame
-        # as the expansion vector of the matrix
-        solve_package.coef = linalg.solve(m, array(solve_package.extract_ef_df()["y"]))
-
-        # Round each polynomial coefficient using the rounder value
-        solve_package.coef = round(solve_package.coef,self.__rounder)
-
-    def __clear(self, solve_package : SolvePackage):
-        '''
-        Delete Monomials with negligible coeficients from solution
-        '''
-        
-        # In this list, the indices of each negligible coefficient
-        # will be stored to delete them from the coefficients list
-        del_index = list()
-        
-        # get index of negligible coeficients
-        # iterate throught each round coeficient and get its index
-        # for delete to polynomial
-        for index, coef in enumerate(solve_package.coef):
-            
-            # add index with negligible coeficients
-            if coef == 0:
-                
-                del_index.append(index)
-        
-        # This is done to generate polynomials as small as possible or to reduce noise
-        solve_package.coef = delete(solve_package.coef,del_index)
-        solve_package.exp = delete(solve_package.exp,del_index)
 
 
         
