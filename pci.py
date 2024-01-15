@@ -165,7 +165,7 @@ class SolvePackage:
         # get index of negligible coeficients
         # iterate throught each round coeficient and get its index
         # for delete to polynomial
-        for index, coef in enumerate(self.coef):
+        for index, coef in enumerate(self.__coef):
             
             # add index with negligible coeficients
             if coef == 0:
@@ -173,8 +173,8 @@ class SolvePackage:
                 del_index.append(index)
         
         # This is done to generate polynomials as small as possible or to reduce noise
-        self.coef = delete(self.coef,del_index)
-        self.exp = delete(self.exp,del_index)
+        self.__coef = delete(self.__coef,del_index)
+        self.__exp = delete(self.__exp,del_index)
     
 
     #hd: Properties
