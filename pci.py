@@ -111,12 +111,12 @@ class SolvePackage:
         #The first step is to locate the pivot within the dataset,
         # which is simply the value within the dataset that is
         # closest to the point you want to approximate
-        val = self.__dr.get_near_value(point)
+        val = self.__dr.get_near_value("x",point)
 
         #Since the effective limits correspond to indices within
         # the dataset, the pivot must also be translated into an
         # index to locate it within the dataset
-        val_indx = self.__dr.get_index(val)
+        val_indx = self.__dr.get_index("x",val)
 
         # The lower limit should not be less than zero, as it is
         # the minimum allowed value for an index. Therefore,
@@ -223,10 +223,6 @@ class SolvePackage:
         # It refers to the nearest value to the desired extrapolation 
         # within the dynamic range 
         in_val = None
-
-        #* outside range value
-        # It refers to the new extrapolated value close to the dynamic range
-        out_val = None
 
         #* insert index 
         # It refers to the index where the new data will be inserted

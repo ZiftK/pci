@@ -156,6 +156,12 @@ class DataRange:
         '''
         return len(self.__df)
     
+    def get_index(self,column_name : str, val):
+        '''
+        Return first match index of value passed
+        '''
+        return get_index(self.__df,column_name,val)
+    
     @DeprecationWarning
     def normalize(self,normal = None):
         '''
