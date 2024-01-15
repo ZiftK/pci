@@ -8,8 +8,8 @@ Created on Mon Oct 23 17:14:46 2023
 
 
 import logging as lg
-import aop 
-import dfop
+import mathematics.aop as aop 
+import mathematics.dfop as dfop
 
 from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 
@@ -58,7 +58,7 @@ class SolvePackage:
         '''
         try:#try check if inside effective range
             # is inside effecitve limits
-            return point >= self.df.get_value(column_name, self.le) and point <= self.df.get_value(column_name,self.ue)
+            return point >= self.dr.get_value(column_name, self.le) and point <= self.df.get_value(column_name,self.ue)
         except TypeError:
             #if effective limits are null, set condition to false
             return False
