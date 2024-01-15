@@ -75,7 +75,7 @@ class SolvePackage:
         Uses the effective lower and upper limits to extract 
         the data frame within the effective range.
         '''
-        return self.dr.extract_df(self.le,self.ue)
+        return self.dr.extract_df(self.__le,self.__ue)
     
 
     #hd: Train methods
