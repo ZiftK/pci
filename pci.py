@@ -82,9 +82,10 @@ class SolvePackage:
 
     def __train(self,point):
         '''
-        Train system to selected solve package
+        Train system to selected solve package around specified point
         '''
 
+        # The train process take place in four stages:
         # calculating effective limits
         # calculating exponents, 
         # solving coefficients, 
@@ -94,7 +95,6 @@ class SolvePackage:
         # and each of these ranges contains its effective range,
         # SolvePackages are used to encapsulate all the variables
         # and functionalities of each super range (static and dynamic).
-        # This SolvePackage is then passed as a parameter to each training phase.
         # This way, we can independently control in each training phase in which
         # super range the system is being trained.
 
