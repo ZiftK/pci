@@ -239,7 +239,7 @@ class SolvePackage:
             # In order to approximate a value outside the dynamic range, 
             # we need to know the last value within the range in the direction
             # of the extrapolation
-            in_val = self.__dr.get_value("x",self.__le)
+            in_val = self.__dr.get_value("x",int(self.__le))
             
             # To insert the new extrapolated value within the dynamic range,
             # it is necessary to know on which side of the range it will be inserted.
