@@ -41,7 +41,7 @@ class SolvePackage:
     def __init__(self, data : dfop.DataFrame):
 
         # data range object
-        self.dr = dfop.DataRange(data)
+        self.__dr = dfop.DataRange(data)
 
         # effective limits
         self.__le = None # effective lower limit
@@ -102,11 +102,32 @@ class SolvePackage:
         self.__solve() # solving coefficients
         self.__clear() # cleaning coefficients
 
-    def __calc_ef_limits(self, point):
+    def __calc_ef_limits(self, point, offset):
         '''
         Calculate the effective limits for the SolvePackage using the specified point
         '''
+        
+        #The first step is to locate the pivot within the dataset,
+        # which is simply the value within the dataset that is
+        # closest to the point you want to approximate
+        val = self.__dr.get_near_value(point)
 
+        #Since the effective limits correspond to indices within
+        # the dataset, the pivot must also be translated into an
+        # index to locate it within the dataset
+        val_indx = self.__dr.get_index(val)
+
+        # The lower limit should not be less than zero, as it is
+        # the minimum allowed value for an index. Therefore,
+        # if the offset exceeds the range of values established
+        # in the dataset, the effective range will be shortened,
+        # and the effective lower index will be set to zero by default
+        self.__le = max(0, val_indx - offset)
+
+        # The same applies to the upper effective limit, as if the offset
+        # from the pivot exceeds the range of values in the dataset,
+        # the effective upper limit will be set to the maximum allowed
+        self.__ue = min(val_indx + offset,self.__dr.rows_count()-1)
 
     def __calc_exp(self):
         '''

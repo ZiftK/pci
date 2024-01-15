@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2024-01-15T16:46:31.767Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.16 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="m1_91lmqtMiwxFQO2Hm-" version="22.1.16" type="device" pages="3">
+<mxfile host="Electron" modified="2024-01-15T17:15:01.043Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.16 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="EX8Jjd6sLedQ13t7aMEA" version="22.1.16" type="device" pages="3">
   <diagram name="Predict" id="ZGAhzHHpjNbUnT1k5Ilm">
     <mxGraphModel dx="1050" dy="629" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -157,11 +157,78 @@
       </root>
     </mxGraphModel>
   </diagram>
-  <diagram id="f0QxP8YdebL6Oa613WGH" name="Page-3">
+  <diagram id="f0QxP8YdebL6Oa613WGH" name="Train">
     <mxGraphModel dx="1050" dy="629" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="GoKpcWI-yPeC4P52vtdN-1" target="GoKpcWI-yPeC4P52vtdN-11">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="170" y="220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-1" value="train" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.start_1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="120" y="110" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-2" value="End" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.terminator;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="120" y="770" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="GoKpcWI-yPeC4P52vtdN-11" target="GoKpcWI-yPeC4P52vtdN-6">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="170" y="320" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="GoKpcWI-yPeC4P52vtdN-6" target="GoKpcWI-yPeC4P52vtdN-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-6" value="calcl_exp" style="ellipse;whiteSpace=wrap;html=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="130" y="350" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="GoKpcWI-yPeC4P52vtdN-9" target="GoKpcWI-yPeC4P52vtdN-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-9" value="solve" style="ellipse;whiteSpace=wrap;html=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="130" y="480" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-11" value="calcl_exp" style="ellipse;whiteSpace=wrap;html=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="130" y="220" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="GoKpcWI-yPeC4P52vtdN-12" target="GoKpcWI-yPeC4P52vtdN-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-12" value="clear" style="ellipse;whiteSpace=wrap;html=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="130" y="640" width="80" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="GoKpcWI-yPeC4P52vtdN-15" target="GoKpcWI-yPeC4P52vtdN-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-15" value="calc_exp" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.start_1;whiteSpace=wrap;fillColor=#0050ef;fontColor=#ffffff;strokeColor=#001DBC;" vertex="1" parent="1">
+          <mxGeometry x="560" y="100" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="GoKpcWI-yPeC4P52vtdN-16" target="GoKpcWI-yPeC4P52vtdN-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-16" value="Localizar el punto más cercano dentro del data frame al punto de entrenamiento real" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;fillColor=#0050ef;strokeColor=#001DBC;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="560" y="200" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="GoKpcWI-yPeC4P52vtdN-18" target="GoKpcWI-yPeC4P52vtdN-20">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-18" value="Localizar índice" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;fillColor=#0050ef;strokeColor=#001DBC;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="560" y="330" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="GoKpcWI-yPeC4P52vtdN-20" target="GoKpcWI-yPeC4P52vtdN-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-20" value="Desfazar indice inferior y superior" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;fillColor=#0050ef;strokeColor=#001DBC;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="560" y="460" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-22" value="End" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.terminator;whiteSpace=wrap;fillColor=#0050ef;strokeColor=#001DBC;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="560" y="610" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="GoKpcWI-yPeC4P52vtdN-25" value="calc_exp" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.start_1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="810" y="100" width="100" height="60" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
