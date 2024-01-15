@@ -48,9 +48,9 @@ class SolvePackage:
         self.__ue = None # effective upper limit
 
         # coeficients to save data range solution
-        self.coef = None
+        self.__coef = None
         # exponentes to save data range solution
-        self.exp = None
+        self.__exp = None
 
 
     #hd: Aux methods
@@ -61,7 +61,9 @@ class SolvePackage:
         '''
         try:#try check if inside effective range
             # is inside effecitve limits
-            return point >= self.dr.get_value(column_name, self.le) and point <= self.df.get_value(column_name,self.ue)
+            c1 = point >= self.dr.get_value(column_name, self.__le)
+            c2 = point <= self.df.get_value(column_name,self.__ue)
+            return c1 and c2
         except TypeError:
             #if effective limits are null, set condition to false
             return False
@@ -181,10 +183,7 @@ class SolvePackage:
     def le(self):
         return self.le
     
-    @le.setter
-    def le(self,value):
-        aux = max(0,value)
-        aux = min(value,)
+
 
 class PCI:
     '''
