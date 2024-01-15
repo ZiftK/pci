@@ -199,7 +199,7 @@ class SolvePackage:
         self.__exp = delete(self.__exp,del_index)
 
 
-    def update_data(self,point,offset, step = 0.5):
+    def update_data(self,point, step = 0.5):
         '''
         Inserts a value outside the original data range, 
         offset by a value defined by 'step' towards the approximation point
@@ -240,12 +240,6 @@ class SolvePackage:
             # to decrease the extrapolation value
             step *= -1
 
-            # The effective range should be set at the beginning of the dynamic
-            # range, so the effective lower limit should be the minimum (zero),
-            # while the effective upper limit should be twice the 'offset'
-            self.__le = 0
-            self.__ue = 2*offset
-
             # In order to approximate a value outside the dynamic range, 
             # we need to know the last value within the range in the direction
             # of the extrapolation
@@ -264,14 +258,6 @@ class SolvePackage:
             # also not found on the left, the only possible 
             # option is that it is located on the right.
 
-            # The effective range should be set at the end of
-            # the dynamic range, so the upper effective limit
-            # should be the maximum (max index in data), and
-            # the lower effective limit should be the maximum
-            # minus twice the 'offset'
-            self.__ue = self.__dr.rows_count() - 1
-            self.__le = self.__ue - 2*offset
-
             # In order to approximate a value outside the dynamic range, 
             # we need to know the last value within the range in the direction
             # of the extrapolation
@@ -283,9 +269,6 @@ class SolvePackage:
             # the index is the effective upper limit, as the data is to the right
             # of the dynamic range
             indx = self.__ue
-
-        # train system within dynamic range
-        self.__train(point,offset)
 
         return in_val, indx
 
@@ -312,6 +295,20 @@ class SolvePackage:
     @property
     def exp(self):
         return self.__exp    
+    
+
+    #hd: Object override
+
+    def __str__(self):
+        '''
+        String object representation
+        '''
+        string = ""
+        
+        for index, coef in enumerate(self.__coef):
+            string += f"{self.__coef[index]}*x^{self.__exp[index]}"
+            string += "" if index == len(self.__coef)-1 else "+"
+        return string.replace("e", "*10^")
 
 
 class PCI:
@@ -383,7 +380,9 @@ class PCI:
         return sum(pdct)
     
     def __train(self, point, solve_package : SolvePackage):
-
+        '''
+        
+        '''
         solve_package.train(point,self.__offset)
 
 
@@ -428,7 +427,7 @@ class PCI:
         elif self.__ssp.dr.is_inside(point,"x"):
 
             #train system inside static limits
-            self.__train(self.__ssp)
+            self.__train(point, self.__ssp)
 
             # apply polinomial solution to static solve package
             return self.__apply_pol(point,self.__ssp)
@@ -447,7 +446,7 @@ class PCI:
             if in_dynamic: #* if point is in dynamic range
                 
                 # train system in dynamic solve package
-                self.__train(self.__dsp)
+                self.__train(point, self.__dsp)
                 # apply polinomial solution to dynamic solve package
                 return self.__apply_pol(point,self.__dsp)
                 break #break while
