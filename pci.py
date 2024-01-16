@@ -8,8 +8,8 @@ Created on Mon Oct 23 17:14:46 2023
 
 
 import logging as lg
-import aop 
-import dfop
+import mathematics.aop as aop
+import mathematics.dfop as dfop
 
 from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 
@@ -58,7 +58,7 @@ class SolvePackage:
         '''
         try:#try check if inside effective range
             # is inside effecitve limits
-            return point >= self.df.get_value(column_name, self.le) and point <= self.df.get_value(column_name,self.ue)
+            return point >= self.dr.get_value(column_name, self.le) and point <= self.dr.get_value(column_name,self.ue)
         except TypeError:
             #if effective limits are null, set condition to false
             return False
@@ -176,7 +176,7 @@ class PCI:
         # We subtract the effective data frame from the SolvePackage to
         # be used and evaluate at each of the 'x' column values in their 
         # respective rows.
-        for x in solve_package.dr.extract_df()["x"]:
+        for x in solve_package.extract_ef_df()["x"]:
             m.append(aop.valpow(  x, solve_package.exp))
         
         # ______ SOLVE ______
