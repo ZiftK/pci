@@ -1,4 +1,7 @@
 '''
+Array operations
+----------------
+
 This library was designed to apply list operations
 '''
 

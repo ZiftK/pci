@@ -266,7 +266,27 @@ class SolvePackage:
             # of the dynamic range
             indx = self.__ue
 
-        return in_val, indx
+            # approximate the value outside the dynamic range using the dynamic SolvePackage
+            out_val = self.__apply_pol(in_val + step,self.__dsp)
+
+            # insert value in selected index
+            self.__dr.insert(indx,in_val + step,"x")
+
+            # set value in "y" column (aproximate value)
+            self.__dr.set_value(indx,out_val,"y")
+    
+    def apply_pol(self,point):
+        '''
+        Apply polinomial solution to specyfic point
+        '''
+        #* make prediction
+        #pow point to each value in exponents array
+        a = aop.valpow(float(point),self.__exp)
+        # multiply each value in solve point exponents 
+        # to each value in solve coefficients
+        pdct = aop.amult(self.__coef,a)
+        #return sum of array
+        return sum(pdct)
 
     
 
@@ -362,18 +382,7 @@ class PCI:
 
 
         
-    def __apply_pol(self,point, solve_package : SolvePackage):
-        '''
-        Apply polinomial solution to specyfic point
-        '''
-        #* make prediction
-        #pow point to each value in exponents array
-        a = aop.valpow(float(point),solve_package.exp)
-        # multiply each value in solve point exponents 
-        # to each value in solve coefficients
-        pdct = aop.amult(solve_package.coef,a)
-        #return sum of array
-        return sum(pdct)
+    
     
     def __train(self, point, solve_package : SolvePackage):
         '''
@@ -387,17 +396,7 @@ class PCI:
         Inserts a value outside the original dynamic range, 
         offset by a value defined by 'step' towards the approximation point
         '''
-
-        in_val, indx = self.__dsp.update_data(point,self.__offset)
-
-        # approximate the value outside the dynamic range using the dynamic SolvePackage
-        out_val = self.__apply_pol(in_val + step,self.__dsp)
-
-        # insert value in selected index
-        self.__dsp.dr.insert(indx,in_val + step,"x")
-
-        # set value in "y" column (aproximate value)
-        self.__dsp.dr.set_value(indx,out_val,"y")
+        self.__dsp.update_data(point)
 
 
     
