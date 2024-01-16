@@ -427,32 +427,29 @@ class PCI:
             # apply polinomial solution to static solve package
             return self.__ssp.apply_pol(point)
 
-        while True: #* train loop
+        # It has been previously verified that the point to approximate 
+        # is outside the dynamic effective range and the 
+        # static effective range. It has also been confirmed to be 
+        # outside the static range, so the only available options are 
+        # that it is within the dynamic range or it is outside all ranges.
 
-            # It has been previously verified that the point to approximate 
-            # is outside the dynamic effective range and the 
-            # static effective range. It has also been confirmed to be 
-            # outside the static range, so the only available options are 
-            # that it is within the dynamic range or it is outside all ranges.
-
-            # check if point is inside dynamic range
-            in_dynamic = self.__dsp.dr.is_inside(point,"x")
-            
-            # train system in dynamic solve package
-            self.__train(point, self.__dsp)
+        # check if point is inside dynamic range
+        in_dynamic = self.__dsp.dr.is_inside(point,"x")
+        
+        # train system in dynamic solve package
+        self.__train(point, self.__dsp)
 
             
-            if in_dynamic: #* if point is in dynamic range
-                
-                # apply polinomial solution to dynamic solve package
-                return self.__apply_pol(point,self.__dsp)
-                break #break while
+        if in_dynamic: #* if point is in dynamic range
             
-            # In case the point is outside the dynamic range, 
-            # the dynamic range should be updated by providing 
-            # feedback until the desired value is reached; 
-            # this is done by the update_dynamic function
-            self.__update_dynamic(point,ep_step)
+            # apply polinomial solution to dynamic solve package
+            return self.__apply_pol(point,self.__dsp)
+        
+        # In case the point is outside the dynamic range, 
+        # the dynamic range should be updated by providing 
+        # feedback until the desired value is reached; 
+        # this is done by the update_dynamic function
+        self.__update_dynamic(point,ep_step)
     
     
     
