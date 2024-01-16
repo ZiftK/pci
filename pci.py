@@ -391,14 +391,6 @@ class PCI:
         solve_package.train(point,self.__offset,self.__rounder)
 
 
-    def __update_dynamic(self,point,step = 0.5):
-        '''
-        Inserts a value outside the original dynamic range, 
-        offset by a value defined by 'step' towards the approximation point
-        '''
-        self.__dsp.update_data(point)
-
-
     
     def predict(self,point,ep_step = 0.5):
         '''
@@ -449,7 +441,7 @@ class PCI:
         # the dynamic range should be updated by providing 
         # feedback until the desired value is reached; 
         # this is done by the update_dynamic function
-        self.__update_dynamic(point,ep_step)
+        self.__dsp.update_data(point,ep_step)
     
     
     
