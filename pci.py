@@ -19,7 +19,7 @@ class SolvePackage:
     The Resolution Package is a class designed to encapsulate a range of 
     data along with its corresponding limits and values used in the PCI approximation. 
     Essentially, it is a class that enables PCI to locate the values of its dynamic or static data.
-
+    
     Properties
     ---------
 
@@ -205,75 +205,83 @@ class SolvePackage:
         offset by a value defined by 'step' towards the approximation point
         '''
 
-        #pass the 'step' parameter through the 'abs' function to avoid 
-        # using negative values (this would result in incorrect 
-        # calculations as it would change the direction 
-        # of the offset for extrapolation)
-        step = abs(step)
+        #TODO: document train loop
+        while True:
 
-        #Within this function, we only need to make one check.
-        # To avoid defining too much code within conditionals
-        # and with the intention of not repeating the same code too much,
-        # we generate three variables that will be set within the 
-        #conditionals to generalize the process using them.
-        # Thus, the extrapolation will change direction with
-        # the change of these variables
+            #pass the 'step' parameter through the 'abs' function to avoid 
+            # using negative values (this would result in incorrect 
+            # calculations as it would change the direction 
+            # of the offset for extrapolation)
+            step = abs(step)
 
-        # *last inside value
-        # It refers to the nearest value to the desired extrapolation 
-        # within the dynamic range 
-        in_val = None
+            #Within this function, we only need to make one check.
+            # To avoid defining too much code within conditionals
+            # and with the intention of not repeating the same code too much,
+            # we generate three variables that will be set within the 
+            #conditionals to generalize the process using them.
+            # Thus, the extrapolation will change direction with
+            # the change of these variables
 
-        #* insert index 
-        # It refers to the index where the new data will be inserted
-        indx = None
+            # *last inside value
+            # It refers to the nearest value to the desired extrapolation 
+            # within the dynamic range 
+            in_val = None
 
-        if point < self.__dr.get_value("x",0):
+            #* insert index 
+            # It refers to the index where the new data will be inserted
+            indx = None
 
-            # If the extrapolation point is to the left of the dynamic dataset,
-            # we need to change the extrapolation direction. 
-            # We achieve this by changing the sign of the 'step' to negative,
-            # to decrease the extrapolation value
-            step *= -1
+            if point < self.__dr.get_value("x",0):
 
-            # In order to approximate a value outside the dynamic range, 
-            # we need to know the last value within the range in the direction
-            # of the extrapolation
-            in_val = self.__dr.get_value("x",int(self.__le))
-            
-            # To insert the new extrapolated value within the dynamic range,
-            # it is necessary to know on which side of the range it will be inserted.
-            # We do this by establishing the insertion index. In this case,
-            # the index is the effective lower limit, as the data is to the left
-            # of the dynamic range
-            indx = self.__le
+                # If the extrapolation point is to the left of the dynamic dataset,
+                # we need to change the extrapolation direction. 
+                # We achieve this by changing the sign of the 'step' to negative,
+                # to decrease the extrapolation value
+                step *= -1
 
-        else:
-            # It has already been verified that the point 
-            # is not within the dynamic range, so if it is 
-            # also not found on the left, the only possible 
-            # option is that it is located on the right.
+                # In order to approximate a value outside the dynamic range, 
+                # we need to know the last value within the range in the direction
+                # of the extrapolation
+                in_val = self.__dr.get_value("x",int(self.__le))
+                
+                # To insert the new extrapolated value within the dynamic range,
+                # it is necessary to know on which side of the range it will be inserted.
+                # We do this by establishing the insertion index. In this case,
+                # the index is the effective lower limit, as the data is to the left
+                # of the dynamic range
+                indx = self.__le
 
-            # In order to approximate a value outside the dynamic range, 
-            # we need to know the last value within the range in the direction
-            # of the extrapolation
-            in_val = self.__dr.get_value("x",self.__ue)
+            else:
+                # It has already been verified that the point 
+                # is not within the dynamic range, so if it is 
+                # also not found on the left, the only possible 
+                # option is that it is located on the right.
 
-            # To insert the new extrapolated value within the dynamic range,
-            # it is necessary to know on which side of the range it will be inserted.
-            # We do this by establishing the insertion index. In this case,
-            # the index is the effective upper limit, as the data is to the right
-            # of the dynamic range
-            indx = self.__ue
+                # In order to approximate a value outside the dynamic range, 
+                # we need to know the last value within the range in the direction
+                # of the extrapolation
+                in_val = self.__dr.get_value("x",self.__ue)
+
+                # To insert the new extrapolated value within the dynamic range,
+                # it is necessary to know on which side of the range it will be inserted.
+                # We do this by establishing the insertion index. In this case,
+                # the index is the effective upper limit, as the data is to the right
+                # of the dynamic range
+                indx = self.__ue
+                
 
             # approximate the value outside the dynamic range using the dynamic SolvePackage
-            out_val = self.__apply_pol(in_val + step,self.__dsp)
+            out_val = self.__apply_pol(in_val + step)
 
             # insert value in selected index
             self.__dr.insert(indx,in_val + step,"x")
 
             # set value in "y" column (aproximate value)
             self.__dr.set_value(indx,out_val,"y")
+
+            if self.__dr.is_inside(point):
+                #TODO: falta arreglar esta función, para que retorne el valor extrapolado
+                break # break train lioop
     
     def apply_pol(self,point):
         '''
@@ -441,7 +449,7 @@ class PCI:
         # the dynamic range should be updated by providing 
         # feedback until the desired value is reached; 
         # this is done by the update_dynamic function
-        self.__dsp.update_data(point,ep_step)
+        return self.__dsp.update_data(point,ep_step)
     
     
     
