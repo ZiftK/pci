@@ -439,10 +439,12 @@ class PCI:
             # check if point is inside dynamic range
             in_dynamic = self.__dsp.dr.is_inside(point,"x")
             
+            # train system in dynamic solve package
+            self.__train(point, self.__dsp)
+
+            
             if in_dynamic: #* if point is in dynamic range
                 
-                # train system in dynamic solve package
-                self.__train(point, self.__dsp)
                 # apply polinomial solution to dynamic solve package
                 return self.__apply_pol(point,self.__dsp)
                 break #break while

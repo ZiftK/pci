@@ -136,6 +136,11 @@ class DataRange:
 
         return get_val_from_index(self.__df,column_name,index)
     
+    def set_value(self,column_name :str, index, value):
+        '''
+        
+        '''
+    
     def get_near_value(self, column_name : str, val):
         '''
         Search nearest value to *val* in column and return it
