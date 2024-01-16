@@ -412,11 +412,11 @@ class PCI:
 
         # check if inside static effective data range
         if self.__ssp.is_inside_ef(point,"x"):
-            return self.__apply_pol(point,self.__ssp)
+            return self.__ssp.apply_pol(point)
 
         # check if inside dynamic effective data range
         elif self.__dsp.is_inside_ef(point,"x"):
-            return self.__apply_pol(point,self.__dsp)
+            return self.__dsp.apply_pol(point)
         
         # it is inside static limits?
         elif self.__ssp.dr.is_inside(point,"x"):
@@ -425,7 +425,7 @@ class PCI:
             self.__train(point, self.__ssp)
 
             # apply polinomial solution to static solve package
-            return self.__apply_pol(point,self.__ssp)
+            return self.__ssp.apply_pol(point)
 
         while True: #* train loop
 
