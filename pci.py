@@ -8,7 +8,7 @@ Created on Mon Oct 23 17:14:46 2023
 
 
 import logging as lg
-import mathematics.aop as aop
+import mathematics.aop as aop 
 import mathematics.dfop as dfop
 
 from numpy import array, arange, matrix, linalg, round, delete, dot, diag
@@ -41,24 +41,29 @@ class SolvePackage:
     def __init__(self, data : dfop.DataFrame):
 
         # data range object
-        self.dr = dfop.DataRange(data)
+        self.__dr = dfop.DataRange(data)
 
         # effective limits
-        self.le = None # effective lower limit
-        self.ue = None # effective upper limit
+        self.__le = None # effective lower limit
+        self.__ue = None # effective upper limit
 
         # coeficients to save data range solution
-        self.coef = None
+        self.__coef = None
         # exponentes to save data range solution
-        self.exp = None
+        self.__exp = None
 
+
+    #hd: Aux methods
+    
     def is_inside_ef(self, point, column_name : str):
         '''
         If point is inside effective range return true, else return false
         '''
         try:#try check if inside effective range
             # is inside effecitve limits
-            return point >= self.dr.get_value(column_name, self.le) and point <= self.dr.get_value(column_name,self.ue)
+            c1 = point >= self.dr.get_value(column_name, self.__le)
+            c2 = point <= self.df.get_value(column_name,self.__ue)
+            return c1 and c2
         except TypeError:
             #if effective limits are null, set condition to false
             return False
@@ -70,7 +75,257 @@ class SolvePackage:
         Uses the effective lower and upper limits to extract 
         the data frame within the effective range.
         '''
-        return self.dr.extract_df(self.le,self.ue)
+        return self.dr.extract_df(self.__le,self.__ue)
+    
+
+    #hd: Train methods
+
+    def train(self,point,offset,rounder):
+        '''
+        Train system to selected solve package around specified point
+        '''
+
+        # The train process take place in four stages:
+        # calculating effective limits
+        # calculating exponents, 
+        # solving coefficients, 
+        # and cleaning coefficients
+
+        # Because the system can be trained in the dynamic or static range,
+        # and each of these ranges contains its effective range,
+        # SolvePackages are used to encapsulate all the variables
+        # and functionalities of each super range (static and dynamic).
+        # This way, we can independently control in each training phase in which
+        # super range the system is being trained.
+
+        self.__calc_ef_limits(point,offset) # calculating effective limits
+        self.__calc_exp() # calculating exponents
+        self.__solve(rounder) # solving coefficients
+        self.__clear() # cleaning coefficients
+
+    def __calc_ef_limits(self, point, offset):
+        '''
+        Calculate the effective limits for the SolvePackage using the specified point
+        '''
+        
+        #The first step is to locate the pivot within the dataset,
+        # which is simply the value within the dataset that is
+        # closest to the point you want to approximate
+        val = self.__dr.get_near_value("x",point)
+
+        #Since the effective limits correspond to indices within
+        # the dataset, the pivot must also be translated into an
+        # index to locate it within the dataset
+        val_indx = self.__dr.get_index("x",val)
+
+        # The lower limit should not be less than zero, as it is
+        # the minimum allowed value for an index. Therefore,
+        # if the offset exceeds the range of values established
+        # in the dataset, the effective range will be shortened,
+        # and the effective lower index will be set to zero by default
+        self.__le = max(0, val_indx - offset)
+
+        # The same applies to the upper effective limit, as if the offset
+        # from the pivot exceeds the range of values in the dataset,
+        # the effective upper limit will be set to the maximum allowed
+        self.__ue = min(val_indx + offset,self.__dr.rows_count()-1)
+
+    def __calc_exp(self):
+        '''
+        Calculate the exponents used in the solution polynomial
+        '''
+
+        # The exponents are calculated using the length of the effective 
+        # range as a parameter. A list of exponents is computed,
+        # where each value represents the exponent of a term in the final 
+        # polynomial (it represents the dimension of the monomial)
+
+        #The super range contained in the assigned SolvePackage is used,
+        # allowing us to obtain the exponents within the specifically
+        # defined effective range for the point to be approximated.
+        # If the point is within the static range, the static SolvePackage
+        # will be used; otherwise, the dynamic one will be used
+
+        self.__exp = [n for n in range(0,len(self.extract_ef_df()))]
+    
+    def __solve(self,rounder):
+        '''
+        Approximate the coefficients of the solution polynomial
+        '''
+        # To approximate the coefficients, it is necessary to solve a 
+        # matrix (n, n), where 'n' is the number of data points used
+        # for the approximation. The first step is to define this matrix
+        m = list()
+
+        # We subtract the effective data frame from the SolvePackage to
+        # be used and evaluate at each of the 'x' column values in their 
+        # respective rows.
+        for x in self.extract_ef_df()["x"]:
+            m.append(aop.valpow(  x, self.__exp))
+        
+        # ______ SOLVE ______
+            
+        # Define 'm' as a NumPy matrix object
+        m = matrix(m)
+
+        # Solve the matrix using the 'y' column of the effective data frame
+        # as the expansion vector of the matrix
+        self.__coef = linalg.solve(m, array(self.extract_ef_df()["y"]))
+
+        # Round each polynomial coefficient using the rounder value
+        self.__coef = round(self.__coef,rounder)
+
+    def __clear(self):
+        '''
+        Delete Monomials with negligible coeficients from solution
+        '''
+        
+        # In this list, the indices of each negligible coefficient
+        # will be stored to delete them from the coefficients list
+        del_index = list()
+        
+        # get index of negligible coeficients
+        # iterate throught each round coeficient and get its index
+        # for delete to polynomial
+        for index, coef in enumerate(self.__coef):
+            
+            # add index with negligible coeficients
+            if coef == 0:
+                
+                del_index.append(index)
+        
+        # This is done to generate polynomials as small as possible or to reduce noise
+        self.__coef = delete(self.__coef,del_index)
+        self.__exp = delete(self.__exp,del_index)
+
+
+    def update_data(self,point, step = 0.5):
+        '''
+        Inserts a value outside the original data range, 
+        offset by a value defined by 'step' towards the approximation point
+        '''
+
+        #pass the 'step' parameter through the 'abs' function to avoid 
+        # using negative values (this would result in incorrect 
+        # calculations as it would change the direction 
+        # of the offset for extrapolation)
+        step = abs(step)
+
+        #Within this function, we only need to make one check.
+        # To avoid defining too much code within conditionals
+        # and with the intention of not repeating the same code too much,
+        # we generate three variables that will be set within the 
+        #conditionals to generalize the process using them.
+        # Thus, the extrapolation will change direction with
+        # the change of these variables
+
+        # *last inside value
+        # It refers to the nearest value to the desired extrapolation 
+        # within the dynamic range 
+        in_val = None
+
+        #* insert index 
+        # It refers to the index where the new data will be inserted
+        indx = None
+
+        if point < self.__dr.get_value("x",0):
+
+            # If the extrapolation point is to the left of the dynamic dataset,
+            # we need to change the extrapolation direction. 
+            # We achieve this by changing the sign of the 'step' to negative,
+            # to decrease the extrapolation value
+            step *= -1
+
+            # In order to approximate a value outside the dynamic range, 
+            # we need to know the last value within the range in the direction
+            # of the extrapolation
+            in_val = self.__dr.get_value("x",int(self.__le))
+            
+            # To insert the new extrapolated value within the dynamic range,
+            # it is necessary to know on which side of the range it will be inserted.
+            # We do this by establishing the insertion index. In this case,
+            # the index is the effective lower limit, as the data is to the left
+            # of the dynamic range
+            indx = self.__le
+
+        else:
+            # It has already been verified that the point 
+            # is not within the dynamic range, so if it is 
+            # also not found on the left, the only possible 
+            # option is that it is located on the right.
+
+            # In order to approximate a value outside the dynamic range, 
+            # we need to know the last value within the range in the direction
+            # of the extrapolation
+            in_val = self.__dr.get_value("x",self.__ue)
+
+            # To insert the new extrapolated value within the dynamic range,
+            # it is necessary to know on which side of the range it will be inserted.
+            # We do this by establishing the insertion index. In this case,
+            # the index is the effective upper limit, as the data is to the right
+            # of the dynamic range
+            indx = self.__ue
+
+            # approximate the value outside the dynamic range using the dynamic SolvePackage
+            out_val = self.__apply_pol(in_val + step,self.__dsp)
+
+            # insert value in selected index
+            self.__dr.insert(indx,in_val + step,"x")
+
+            # set value in "y" column (aproximate value)
+            self.__dr.set_value(indx,out_val,"y")
+    
+    def apply_pol(self,point):
+        '''
+        Apply polinomial solution to specyfic point
+        '''
+        #* make prediction
+        #pow point to each value in exponents array
+        a = aop.valpow(float(point),self.__exp)
+        # multiply each value in solve point exponents 
+        # to each value in solve coefficients
+        pdct = aop.amult(self.__coef,a)
+        #return sum of array
+        return sum(pdct)
+
+    
+
+    #hd: Properties
+
+    @property
+    def le(self):
+        return self.__le
+    
+    @property
+    def ue(self):
+        return self.__ue
+
+    @property
+    def dr(self):
+        return self.__dr
+
+    @property
+    def coef(self):
+        return self.__coef
+
+    @property
+    def exp(self):
+        return self.__exp    
+    
+
+    #hd: Object override
+
+    def __str__(self):
+        '''
+        String object representation
+        '''
+        string = ""
+        
+        for index, coef in enumerate(self.__coef):
+            string += f"{self.__coef[index]}*x^{self.__exp[index]}"
+            string += "" if index == len(self.__coef)-1 else "+"
+        return string.replace("e", "*10^")
+
 
 class PCI:
     '''
@@ -124,207 +379,24 @@ class PCI:
         self.__tst = None
         self.__tst2 = None
         
-    def __train(self, solve_package: SolvePackage):
-        '''
-        Train system to selected solve package
-        '''
 
-        # The system training takes place in three steps: 
-        # calculating exponents, 
-        # solving coefficients, 
-        # and cleaning coefficients
 
-        # Because the system can be trained in the dynamic or static range,
-        # and each of these ranges contains its effective range,
-        # SolvePackages are used to encapsulate all the variables
-        # and functionalities of each super range (static and dynamic).
-        # This SolvePackage is then passed as a parameter to each training phase.
-        # This way, we can independently control in each training phase in which
-        # super range the system is being trained.
-
-        self.__calc_exp(solve_package) # calculating exponents
-        self.__solve(solve_package) # solving coefficients
-        self.__clear(solve_package) # cleaning coefficients
-
-    def __calc_exp(self,solve_package : SolvePackage):
-        '''
-        Calculate the exponents used in the solution polynomial
-        '''
-
-        # The exponents are calculated using the length of the effective 
-        # range as a parameter. A list of exponents is computed,
-        # where each value represents the exponent of a term in the final 
-        # polynomial (it represents the dimension of the monomial)
-
-        #The super range contained in the assigned SolvePackage is used,
-        # allowing us to obtain the exponents within the specifically
-        # defined effective range for the point to be approximated.
-        # If the point is within the static range, the static SolvePackage
-        # will be used; otherwise, the dynamic one will be used
-
-        solve_package.exp = [n for n in range(0,len(solve_package.extract_ef_df()))]
+        
     
-    def __solve(self, solve_package : SolvePackage):
-        '''
-        Approximate the coefficients of the solution polynomial
-        '''
-        # To approximate the coefficients, it is necessary to solve a 
-        # matrix (n, n), where 'n' is the number of data points used
-        # for the approximation. The first step is to define this matrix
-        m = list()
-
-        # We subtract the effective data frame from the SolvePackage to
-        # be used and evaluate at each of the 'x' column values in their 
-        # respective rows.
-        for x in solve_package.extract_ef_df()["x"]:
-            m.append(aop.valpow(  x, solve_package.exp))
-        
-        # ______ SOLVE ______
-            
-        # Define 'm' as a NumPy matrix object
-        m = matrix(m)
-
-        # Solve the matrix using the 'y' column of the effective data frame
-        # as the expansion vector of the matrix
-        solve_package.coef = linalg.solve(m, array(solve_package.extract_ef_df()["y"]))
-
-        # Round each polynomial coefficient using the rounder value
-        solve_package.coef = round(solve_package.coef,self.__rounder)
-
-    def __clear(self, solve_package : SolvePackage):
-        '''
-        Delete Monomials with negligible coeficients from solution
-        '''
-        
-        # In this list, the indices of each negligible coefficient
-        # will be stored to delete them from the coefficients list
-        del_index = list()
-        
-        # get index of negligible coeficients
-        # iterate throught each round coeficient and get its index
-        # for delete to polynomial
-        for index, coef in enumerate(solve_package.coef):
-            
-            # add index with negligible coeficients
-            if coef == 0:
-                
-                del_index.append(index)
-        
-        # This is done to generate polynomials as small as possible or to reduce noise
-        solve_package.coef = delete(solve_package.coef,del_index)
-        solve_package.exp = delete(solve_package.exp,del_index)
-
-
-        
-    def __apply_pol(self,point, solve_package : SolvePackage):
-        '''
-        Apply polinomial solution to specyfic point
-        '''
-        #* make prediction
-        #pow point to each value in exponents array
-        a = aop.valpow(float(point),solve_package.exp)
-        # multiply each value in solve point exponents 
-        # to each value in solve coefficients
-        pdct = aop.amult(solve_package.coef,a)
-        #return sum of array
-        return sum(pdct)
     
+    def __train(self, point, solve_package : SolvePackage):
+        '''
+        
+        '''
+        solve_package.train(point,self.__offset,self.__rounder)
+
+
     def __update_dynamic(self,point,step = 0.5):
         '''
         Inserts a value outside the original dynamic range, 
         offset by a value defined by 'step' towards the approximation point
         '''
-
-        #pass the 'step' parameter through the 'abs' function to avoid 
-        # using negative values (this would result in incorrect 
-        # calculations as it would change the direction 
-        # of the offset for extrapolation)
-        step = abs(step)
-
-        #Within this function, we only need to make one check.
-        # To avoid defining too much code within conditionals
-        # and with the intention of not repeating the same code too much,
-        # we generate three variables that will be set within the 
-        #conditionals to generalize the process using them.
-        # Thus, the extrapolation will change direction with
-        # the change of these variables
-
-        # *last inside value
-        # It refers to the nearest value to the desired extrapolation 
-        # within the dynamic range 
-        in_val = None
-
-        #* outside range value
-        # It refers to the new extrapolated value close to the dynamic range
-        out_val = None
-
-        #* insert index 
-        # It refers to the index where the new data will be inserted
-        indx = None
-
-        if point < self.__dsp.dr.get_value("x",0):
-
-            # If the extrapolation point is to the left of the dynamic dataset,
-            # we need to change the extrapolation direction. 
-            # We achieve this by changing the sign of the 'step' to negative,
-            # to decrease the extrapolation value
-            step *= -1
-
-            # The effective range should be set at the beginning of the dynamic
-            # range, so the effective lower limit should be the minimum (zero),
-            # while the effective upper limit should be twice the 'offset'
-            self.__dsp.le = 0
-            self.__dsp.ue = 2*self.__offset
-
-            # In order to approximate a value outside the dynamic range, 
-            # we need to know the last value within the range in the direction
-            # of the extrapolation
-            in_val = self.__dsp.dr.get_value("x",self.__dsp.le)
-            
-            # To insert the new extrapolated value within the dynamic range,
-            # it is necessary to know on which side of the range it will be inserted.
-            # We do this by establishing the insertion index. In this case,
-            # the index is the effective lower limit, as the data is to the left
-            # of the dynamic range
-            indx = self.__dsp.le
-
-        else:
-            # It has already been verified that the point 
-            # is not within the dynamic range, so if it is 
-            # also not found on the left, the only possible 
-            # option is that it is located on the right.
-
-            # The effective range should be set at the end of
-            # the dynamic range, so the upper effective limit
-            # should be the maximum (max index in data), and
-            # the lower effective limit should be the maximum
-            # minus twice the 'offset'
-            self.__dsp.ue = self.__dsp.dr.rows_count() - 1
-            self.__dsp.le = self.__dsp.ue - 2*self.__offset
-
-            # In order to approximate a value outside the dynamic range, 
-            # we need to know the last value within the range in the direction
-            # of the extrapolation
-            in_val = self.__dsp.dr.get_value("x",self.__dsp.ue)
-
-            # To insert the new extrapolated value within the dynamic range,
-            # it is necessary to know on which side of the range it will be inserted.
-            # We do this by establishing the insertion index. In this case,
-            # the index is the effective upper limit, as the data is to the right
-            # of the dynamic range
-            indx = self.__dsp.ue
-
-        # train system within dynamic range
-        self.__train(self.__dsp)
-
-        # approximate the value outside the dynamic range using the dynamic SolvePackage
-        out_val = self.__apply_pol(in_val + step,self.__dsp)
-
-        # insert value in selected index
-        self.__dsp.dr.insert(indx,in_val + step,"x")
-
-        # set value in "y" column (aproximate value)
-        self.__dsp.dr.set_value(indx,out_val,"y")
+        self.__dsp.update_data(point)
 
 
     
@@ -350,7 +422,7 @@ class PCI:
         elif self.__ssp.dr.is_inside(point,"x"):
 
             #train system inside static limits
-            self.__train(self.__ssp)
+            self.__train(point, self.__ssp)
 
             # apply polinomial solution to static solve package
             return self.__apply_pol(point,self.__ssp)
@@ -369,7 +441,7 @@ class PCI:
             if in_dynamic: #* if point is in dynamic range
                 
                 # train system in dynamic solve package
-                self.__train(self.__dsp)
+                self.__train(point, self.__dsp)
                 # apply polinomial solution to dynamic solve package
                 return self.__apply_pol(point,self.__dsp)
                 break #break while
@@ -381,16 +453,7 @@ class PCI:
             self.__update_dynamic(point,ep_step)
     
     
-    def __str__(self):
-        '''
-        String object representation
-        '''
-        string = ""
-        
-        for index, coef in enumerate(self.__coefficients):
-            string += f"{self.__coefficients[index]}*x^{self.__exp[index]}"
-            string += "" if index == len(self.__coefficients)-1 else "+"
-        return string.replace("e", "*10^")
+    
 
 def pcit_ov(data, offset_range, rounder, values_range)-> dict:
     '''

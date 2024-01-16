@@ -1,7 +1,5 @@
-from pci import PCI
+import pci as pci
 
-psys = PCI("csvs/sin.csv")
+psys = pci.PCI("csvs/sin.csv",offset=10)
 
-a = psys.predict(0)
-
-print(a)
+print(psys.predict(0))
