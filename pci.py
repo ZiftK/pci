@@ -62,7 +62,7 @@ class SolvePackage:
         try:#try check if inside effective range
             # is inside effecitve limits
             c1 = point >= self.dr.get_value(column_name, self.__le)
-            c2 = point <= self.df.get_value(column_name,self.__ue)
+            c2 = point <= self.dr.get_value(column_name,self.__ue)
             return c1 and c2
         except TypeError:
             #if effective limits are null, set condition to false
@@ -225,7 +225,7 @@ class SolvePackage:
             # *last inside value
             # It refers to the nearest value to the desired extrapolation 
             # within the dynamic range 
-            in_val = None
+            in_val = None 
 
             #* insert index 
             # It refers to the index where the new data will be inserted
@@ -271,7 +271,7 @@ class SolvePackage:
                 
 
             # approximate the value outside the dynamic range using the dynamic SolvePackage
-            out_val = self.__apply_pol(in_val + step)
+            out_val = self.apply_pol(in_val + step)
 
             # insert value in selected index
             self.__dr.insert(indx,in_val + step,"x")
@@ -279,9 +279,11 @@ class SolvePackage:
             # set value in "y" column (aproximate value)
             self.__dr.set_value(indx,out_val,"y")
 
-            if self.__dr.is_inside(point):
-                #TODO: falta arreglar esta función, para que retorne el valor extrapolado
-                break # break train lioop
+            # If the approximation point is within the
+            # effective range, it means that we have
+            # extrapolated the dataset enough to provide a result
+            if self.is_inside_ef(point,"x"):
+                return self.apply_pol(point)
     
     def apply_pol(self,point):
         '''
