@@ -66,8 +66,14 @@ def insert(df: DataFrame,column_name : str, index : int, value : float):
     all other columns will have a default value.
     '''
 
-    # Inserta el valor 6 en la fila 2 de la columna y desplaza los valores hacia abajo
+    
     df.loc[index:, column_name] = df.loc[index:, column_name].shift(1)
+    df.loc[index, column_name] = value
+
+def set_value(df : DataFrame, column_name : str, index : int, value : float):
+    '''
+        Set value of specified column and index into value passed
+    '''
     df.loc[index, column_name] = value
 
 
@@ -122,6 +128,12 @@ class DataRange:
         '''
         return value >= self.min_val_from(column_name) and value <= self.max_val_from(column_name)
     
+    def is_in_column(self,value, column_name : str):
+        '''
+        Check if passed value is in passed column
+        '''
+        return value in self.__df[column_name].values
+    
     def get_mean_diff(self, column_name : str):
         '''
         Return the mean diff of data in data frame from specyfic column
@@ -138,8 +150,10 @@ class DataRange:
     
     def set_value(self,column_name :str, index, value):
         '''
-        
+        Set value of specified column and index into value passed
         '''
+
+        set_value(self.__df,column_name,index, value)
     
     def get_near_value(self, column_name : str, val):
         '''

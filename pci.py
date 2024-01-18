@@ -455,29 +455,34 @@ class PCI:
         # feedback until the desired value is reached; 
         # this is done by the update_dynamic function
         return self.__dsp.update_out_data(point,ep_step)
-    
-    @DeprecationWarning
+
+
     def normalize(self,step = 0.1):
         '''
         Flat dynamic data frame using normal as difference value
         '''
-        cur_val = self.__dsp.dr.get_value("x",0) + step
 
+        
+        cur_val = round( self.__dsp.dr.get_value("x",0) + step,self.__rounder)
         indx = 1
 
         while True:
 
-            if not self.__dsp.dr.is_inside(cur_val,"x"):
+            if self.__dsp.dr.is_inside(cur_val,"x"):
 
                 pdct_val = self.predict(cur_val)
 
-                self.__ssp.dr.insert(indx,pdct_val,"y")
+                self.__dsp.dr.insert(indx,cur_val,"x")
+
+                self.__dsp.dr.set_value("y",indx,pdct_val)
 
             if not self.__dsp.dr.is_inside(cur_val + step,"x"):
                 break
 
             cur_val += step
             indx += 1
+
+        print(self.__dsp.dr.extract_df(0,self.__dsp.dr.rows_count()))
 
 def pcit_ov(data, offset_range, rounder, values_range)-> dict:
     '''
