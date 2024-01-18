@@ -466,6 +466,8 @@ class PCI:
         cur_val = round( self.__dsp.dr.get_value("x",0) + step,self.__rounder)
         indx = 1
 
+        print(f"----{self.__dsp.dr.rows_count()}")
+
         while True:
 
             if self.__dsp.dr.is_inside(cur_val,"x"):
@@ -483,6 +485,7 @@ class PCI:
             indx += 1
 
         print(self.__dsp.dr.extract_df(0,self.__dsp.dr.rows_count()))
+        print(f"------{self.__dsp.dr.rows_count()}")
 
 def pcit_ov(data, offset_range, rounder, values_range)-> dict:
     '''
