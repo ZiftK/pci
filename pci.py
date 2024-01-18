@@ -77,6 +77,9 @@ class SolvePackage:
         '''
         return self.dr.extract_df(self.__le,self.__ue)
     
+    
+        
+    
 
     #hd: Train methods
 
@@ -199,7 +202,7 @@ class SolvePackage:
         self.__exp = delete(self.__exp,del_index)
 
 
-    def update_data(self,point, step = 0.5):
+    def update_out_data(self,point, step = 0.5):
         '''
         Inserts a value outside the original data range, 
         offset by a value defined by 'step' towards the approximation point
@@ -451,10 +454,30 @@ class PCI:
         # the dynamic range should be updated by providing 
         # feedback until the desired value is reached; 
         # this is done by the update_dynamic function
-        return self.__dsp.update_data(point,ep_step)
+        return self.__dsp.update_out_data(point,ep_step)
     
-    
-    
+    @DeprecationWarning
+    def normalize(self,step = 0.1):
+        '''
+        Flat dynamic data frame using normal as difference value
+        '''
+        cur_val = self.__dsp.dr.get_value("x",0) + step
+
+        indx = 1
+
+        while True:
+
+            if not self.__dsp.dr.is_inside(cur_val,"x"):
+
+                pdct_val = self.predict(cur_val)
+
+                self.__ssp.dr.insert(indx,pdct_val,"y")
+
+            if not self.__dsp.dr.is_inside(cur_val + step,"x"):
+                break
+
+            cur_val += step
+            indx += 1
 
 def pcit_ov(data, offset_range, rounder, values_range)-> dict:
     '''

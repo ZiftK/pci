@@ -1,4 +1,4 @@
-<mxfile host="Electron" modified="2024-01-15T17:15:01.043Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.16 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="EX8Jjd6sLedQ13t7aMEA" version="22.1.16" type="device" pages="3">
+<mxfile host="Electron" modified="2024-01-18T19:31:49.813Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/22.1.16 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="vCztaq97-aj0_X6lizWd" version="22.1.16" type="device" pages="4">
   <diagram name="Predict" id="ZGAhzHHpjNbUnT1k5Ilm">
     <mxGraphModel dx="1050" dy="629" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -228,6 +228,77 @@
         </mxCell>
         <mxCell id="GoKpcWI-yPeC4P52vtdN-25" value="calc_exp" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.start_1;whiteSpace=wrap;" vertex="1" parent="1">
           <mxGeometry x="810" y="100" width="100" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="eX6mTawWKucsLENUI89w" name="normalize">
+    <mxGraphModel dx="1050" dy="629" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-1" value="end" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.terminator;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="240" y="990" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="e0-KM0Z7RCRFLpemC5kx-2" target="e0-KM0Z7RCRFLpemC5kx-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-2" value="normalize" style="strokeWidth=2;html=1;shape=mxgraph.flowchart.start_1;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="240" y="70" width="100" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="e0-KM0Z7RCRFLpemC5kx-13" target="e0-KM0Z7RCRFLpemC5kx-27">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="290" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-13" value="step" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="230" y="190" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-32" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="e0-KM0Z7RCRFLpemC5kx-27" target="e0-KM0Z7RCRFLpemC5kx-31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-27" value="Establecemos la variable&lt;br&gt;curr_val&lt;br&gt;al primer valor en el set de datos&lt;br&gt;&lt;br&gt;cur_val += step" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="240" y="300" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-35" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="e0-KM0Z7RCRFLpemC5kx-29" target="e0-KM0Z7RCRFLpemC5kx-34">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-29" value="predict" style="verticalLabelPosition=bottom;verticalAlign=top;html=1;shape=offPageConnector;rounded=0;size=0.5;fillColor=#a20025;fontColor=#ffffff;strokeColor=#6F0000;" vertex="1" parent="1">
+          <mxGeometry x="410" y="580" width="60" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-33" value="F&lt;br&gt;arg: cur_val&amp;nbsp;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="e0-KM0Z7RCRFLpemC5kx-31" target="e0-KM0Z7RCRFLpemC5kx-29">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-41" value="T" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="e0-KM0Z7RCRFLpemC5kx-31" target="e0-KM0Z7RCRFLpemC5kx-39">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-31" value="curr_val + step in data" style="rhombus;whiteSpace=wrap;html=1;rounded=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="230" y="440" width="120" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="e0-KM0Z7RCRFLpemC5kx-34" target="e0-KM0Z7RCRFLpemC5kx-39">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-34" value="añadimos el valor al set de datos" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="390" y="690" width="100" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="e0-KM0Z7RCRFLpemC5kx-36" target="e0-KM0Z7RCRFLpemC5kx-31">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="580" y="460" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-36" value="cur_val += step" style="rounded=1;whiteSpace=wrap;html=1;absoluteArcSize=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="510" y="820" width="100" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-42" value="T" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="e0-KM0Z7RCRFLpemC5kx-39" target="e0-KM0Z7RCRFLpemC5kx-36">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-44" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="e0-KM0Z7RCRFLpemC5kx-39" target="e0-KM0Z7RCRFLpemC5kx-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e0-KM0Z7RCRFLpemC5kx-39" value="cur_val + step inside data" style="rhombus;whiteSpace=wrap;html=1;rounded=1;arcSize=14;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="210" y="790" width="160" height="150" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
