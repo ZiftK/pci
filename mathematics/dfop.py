@@ -132,14 +132,11 @@ class DataRange:
             self.__df = read_csv(df)
         else:# if param type are not data frame or string raise exception
             raise TypeError("A data frame or string path are expected")
-        
+    
+    @DeprecationWarning
     def insert(self, index, value, column_name):
         '''
-        Adds a row with the specified index, shifting the replacement 
-        row and all others to the right.
-
-        The specified value will be assigned to the specified column; 
-        all other columns will have a default value.
+        
         '''
 
         insert(self.__df,column_name,index,value)
