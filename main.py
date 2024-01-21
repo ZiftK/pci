@@ -1,10 +1,10 @@
-import pci as pci
+# import pci as pci
 
-psys = pci.PCI("csvs/sin.csv",offset=10,rounder=50)
+# psys = pci.PCI("csvs/sin.csv",offset=10,rounder=50)
 
-psys.normalize()
+# psys.normalize()
 
-print(psys.predict(-1.5,0.1))
+# print(psys.predict(-1.5,0.1))
 
 import pandas as pd
 
@@ -13,10 +13,17 @@ data = {'Columna1': [1, 2, 3],
         'Columna2': ['a', 'b', 'c']}
 df = pd.DataFrame(data)
 
-# Nueva fila que deseas agregar
-nueva_fila = {'Columna1': 4, 'Columna2': 'd'}
+# # Nueva fila que deseas agregar
+# nueva_fila = {'Columna1': 4, 'Columna2': 'd'}
 
-# Usando loc para agregar la nueva fila
-df.loc[len(df)] = nueva_fila
+# # Usando loc para agregar la nueva fila
+# df.loc[len(df)] = nueva_fila
+
+# print(df)
+
+import mathematics.dfop as dfop
+
+df = dfop.soft_insert(df,{"Columna1":4,"Columna2":"d"},2)
+
 
 print(df)

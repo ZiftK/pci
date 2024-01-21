@@ -70,6 +70,31 @@ def insert(df: DataFrame,column_name : str, index : int, value : float):
     df.loc[index:, column_name] = df.loc[index:, column_name].shift(1)
     df.loc[index, column_name] = value
 
+def soft_insert(df: DataFrame, row : dict, index : int):
+    '''
+    Adds a row with the specified index, shifting the replacement 
+    row and all others to the right.
+
+    The specified value will be assigned to the specified column; 
+    all other columns will have a default value.
+    '''
+
+    
+    up = segment(df,0,index)
+    down = segment(df,index, len(df))
+    down.index += 1
+    new_row = Series(row)
+    new_df = up._append(new_row,ignore_index = True)
+    new_df = new_df._append(down)
+
+    print(" --------- up --------- ")
+    print(up)
+
+    print(" --------- down --------- ")
+    print(down)
+
+    return new_df
+
 def set_value(df : DataFrame, column_name : str, index : int, value : float):
     '''
         Set value of specified column and index into value passed
