@@ -59,40 +59,57 @@ def mean_diff(df : DataFrame, column_name : str)-> float:
 
 def insert(df: DataFrame,column_name : str, index : int, value : float):
     '''
-    Adds a row with the specified index, shifting the replacement 
-    row and all others to the right.
-
-    The specified value will be assigned to the specified column; 
-    all other columns will have a default value.
+    
     '''
 
     
     df.loc[index:, column_name] = df.loc[index:, column_name].shift(1)
     df.loc[index, column_name] = value
 
-def soft_insert(df: DataFrame, row : dict, index : int):
+def soft_insert(df: DataFrame, row : dict, index : int)-> DataFrame:
     '''
     Adds a row with the specified index, shifting the replacement 
     row and all others to the right.
 
     The specified value will be assigned to the specified column; 
     all other columns will have a default value.
+
+    Returns
+    --------
+    DataFrame with new row inserted
     '''
 
-    
+    # To insert a new row into the data frame in a way that
+    # its length can be manipulated, it is necessary to split
+    # the data frame into two parts: the segment called 'up'
+    # and the segment called 'down'
+
+    # The 'up' segment comprises from the beginning of
+    # the DataFrame to the insertion position
     up = segment(df,0,index)
+
+    # The 'up' segment comprises from the insertion
+    # position to the end of the DataFrame
     down = segment(df,index, len(df))
+
+    # Since the 'ignore_index' option must be set to
+    # 'True' to insert a row from a dictionary, 
+    # we need to manually increment the indices
+    # of the 'down' segment by one
     down.index += 1
+
+    # We create a new series from the dictionary
+    # passed as an argument to insert it as the
+    # new row. We set its 'name' to the value 
+    # of the insertion index
     new_row = Series(row)
+
+    # We add the new row to the 'up' segment
     new_df = up._append(new_row,ignore_index = True)
+    # Join all segments
     new_df = new_df._append(down)
 
-    print(" --------- up --------- ")
-    print(up)
-
-    print(" --------- down --------- ")
-    print(down)
-
+    # Return join data frame
     return new_df
 
 def set_value(df : DataFrame, column_name : str, index : int, value : float):
@@ -126,6 +143,16 @@ class DataRange:
         '''
 
         insert(self.__df,column_name,index,value)
+
+    def soft_insert(self, row : dict, index : int):
+        '''
+        Adds a row with the specified index, shifting the replacement 
+        row and all others to the right.
+
+        The specified value will be assigned to the specified column; 
+        all other columns will have a default value.
+        '''
+        self.__df = soft_insert(self.__df,row,index)
 
     def extract_df(self, initial_index : int, final_index : int):
         '''
@@ -180,10 +207,6 @@ class DataRange:
 
         set_value(self.__df,column_name,index, value)
 
-    def inser_column(self, dict_row : dict):
-        '''
-        '''
-        #TODO: finish this method, to expand original data frame
     
     def get_near_value(self, column_name : str, val):
         '''
