@@ -272,15 +272,13 @@ class SolvePackage:
                 # of the dynamic range
                 indx = self.__ue
                 
-
+            
             # approximate the value outside the dynamic range using the dynamic SolvePackage
-            out_val = self.apply_pol(in_val + step)
+            out_val = in_val + step
+            extrapol_val = self.apply_pol(out_val)
 
             # insert value in selected index
-            self.__dr.insert(indx,in_val + step,"x")
-
-            # set value in "y" column (aproximate value)
-            self.__dr.set_value(indx,out_val,"y")
+            self.__dr.soft_insert({"x":out_val,"y":extrapol_val})
 
             # If the approximation point is within the
             # effective range, it means that we have
@@ -474,9 +472,7 @@ class PCI:
 
                 pdct_val = self.predict(cur_val)
 
-                self.__dsp.dr.insert(indx,cur_val,"x")
-
-                self.__dsp.dr.set_value("y",indx,pdct_val)
+                self.__dsp.dr.soft_insert({"x":cur_val,"y":pdct_val},indx)
 
             if not self.__dsp.dr.is_inside(cur_val + step,"x"):
                 break
