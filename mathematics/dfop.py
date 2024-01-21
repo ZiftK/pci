@@ -154,6 +154,11 @@ class DataRange:
         '''
 
         set_value(self.__df,column_name,index, value)
+
+    def inser_column(self, dict_row : dict):
+        '''
+        '''
+        #TODO: finish this method, to expand original data frame
     
     def get_near_value(self, column_name : str, val):
         '''
