@@ -177,13 +177,6 @@ class DataRange:
         '''
         return value >= self.min_val_from(column_name) and value <= self.max_val_from(column_name)
     
-    def is_in(self, value,  column_name : str):
-        '''
-        Check if value is in specified column, if it is return True, else return False
-        '''
-
-        return value in self.__df[column_name]
-    
     def is_in_column(self,value, column_name : str):
         '''
         Check if passed value is in passed column
