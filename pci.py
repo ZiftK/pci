@@ -275,7 +275,7 @@ class SolvePackage:
         extrapol_val = self.apply_pol(out_val)
 
         # insert value in selected index
-        self.__dr.soft_insert({"x":out_val,"y":extrapol_val})
+        self.__dr.soft_insert({"x":out_val,"y":extrapol_val},indx)
 
 
     
