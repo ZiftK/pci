@@ -444,6 +444,8 @@ class PCI:
 
             self.__dsp.update_out_data(point,ep_step)
 
+        return self.__dsp.apply_pol(point)
+
 
 
     def normalize(self,step = 0.1):
