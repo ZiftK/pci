@@ -448,120 +448,38 @@ class PCI:
 
 
 
-    def normalize(self,step = 0.1):
+    def normalize(self,step = None,norm_round = 5):
         '''
         Flat dynamic data frame using normal as difference value
         '''
-
+        #TODO: Document normalize function and refactor. Fix normalize bug
         
-        cur_val = round( self.__dsp.dr.get_value("x",0) + step,self.__rounder)
-        indx = 1
+        if step == None:
+            step = self.__dsp.dr.get_mean_diff("x")
 
-        print(f"----{self.__dsp.dr.rows_count()}")
+        cur_val = round(self.__dsp.dr.get_value("x",0) + step,norm_round)
+        indx = 1
 
         while True:
 
-            if self.__dsp.dr.is_inside(cur_val,"x"):
+            if not self.__dsp.dr.is_inside(cur_val,"x"):
 
+                break
+
+            if  not self.__dsp.dr.is_in_column(cur_val,"x"):
+                print(f"\n------------{cur_val}--------\n")
                 pdct_val = self.predict(cur_val)
 
                 self.__dsp.dr.soft_insert({"x":cur_val,"y":pdct_val},indx)
 
-            if not self.__dsp.dr.is_inside(cur_val + step,"x"):
-                break
 
             cur_val += step
             indx += 1
+            cur_val = round(cur_val, norm_round)
 
         print(self.__dsp.dr.extract_df(0,self.__dsp.dr.rows_count()))
         print(f"------{self.__dsp.dr.rows_count()}")
 
-def pcit_ov(data, offset_range, rounder, values_range)-> dict:
-    '''
-    Iterate through the offset range
-    and set the PCI system for each offset in the range. 
-    Then, approximate each value in the values range using each 
-    one of the offsets set
-    '''
-
-    # aprox_values is a dictionary that stores numpy arrays. 
-    # This is because for each offset in the offset range, a 
-    # list of approximate values will be calculated.
-    # Each key of the ‘aprox_values’ dictionary represents 
-    # the offset that will be calculated, and its content 
-    # represents the output PCI predicted values from the 
-    # ‘values_range’ as inputs.
-
-    aprox_values : dict = dict() # aproximate values dictionary
-    current_values : list = list() # ccurrent PCI predicted values for each step
-
-    # iterate throught offset range.
-    # For each offset in 'offset_range'
-    # a list of PCI predicted values will
-    # be calculate.
-    for current_off in offset_range: 
-
-        # debug message
-        print(f"\n\nPCI offset variable** current offset: {current_off}")
-
-        # init pci system with offset as current offset
-        pcys = PCI(data, rounder = rounder, offset = current_off)
-        
-        # iterate throught values range.
-        # For each value in the ‘values_range’, 
-        # a PCI predicted value will be calculated.
-        for value in values_range: 
-
-            print(f"\t current value: {value}")
-
-            # aproximate values
-            current_values.append(pcys.predict(value))
-
-        # vectorize and save values
-        aprox_values[current_off] = array(current_values)
-
-        # clear current values
-        current_values.clear()
-
-        del pcys # delete pci system
-
-    return aprox_values # return aproximate values
-
-def pcit_rv(data, offset, rounder_range, values_range)-> dict:
-    '''
-    Iterate through the rounder range and set the PCI
-    system for each rounder in the range. Then, aproximate
-    each value in the values range using each one of the
-    rounder set
-    '''
-
-    aprox_values : dict = dict() # aproximate values dictionary
-    current_values : list = list() 
-
-    for current_round in rounder_range: # iterate throught offset range
-
-        # debug message
-        print(f"\n\nPCI rounder variable** current round: {current_round}")
-
-        # init pci system
-        pcys = PCI(data,rounder = current_round, offset = offset)
-
-        for value in values_range: # iterate throught values range
-
-            print(f"\t current value: {value}")
-
-            # aproximate values
-            current_values.append(pcys.predict(value))
-
-        # vectorize values and save it
-        aprox_values[current_round] = array(current_values)
-
-        # clear current values
-        current_values.clear()
-
-        del pcys # delete pci system
-
-    return aprox_values # return aproximate values
 
 def relative_error(real_val,aprox_val):
     '''
