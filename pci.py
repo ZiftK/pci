@@ -487,6 +487,48 @@ def relative_error(real_val,aprox_val):
     '''
     return 100*abs((real_val-aprox_val)/real_val)
 
+def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounder_range : list):
+    '''
+    
+    '''
+
+    values = [x for x in df["x"].values]
+    inputs = list()
+    l = len(values)
+
+    values = list()
+    error = list()
+
+    final_df = dfop.DataFrame
+
+    for i, input in enumerate(values):
+
+        if i + 1 >= l:
+            break
+
+        inputs.append((input + values[i+1])/2)
+
+    for off in offset_range:
+
+        for rnd in rounder_range:
+
+            pcys = PCI(df,offset=off,rounder=rnd)
+
+            for x in inputs:
+
+                v_r = function(x)
+                v_a = pcys.predict(x)
+
+                final_df._append(
+                    {
+                        "offset": off,
+                        "rounder":rnd,
+                        "x":x,
+                        "valor real":v_r,
+                        "valor aproximado": v_a,
+                        "error": relative_error(v_r,v_a)
+                    }
+                )
 
 
 if __name__ == "__main__":
