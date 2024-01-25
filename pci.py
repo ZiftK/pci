@@ -11,7 +11,7 @@ import logging as lg
 import mathematics.aop as aop 
 import mathematics.dfop as dfop
 
-from numpy import array, arange, matrix, linalg, round, delete, dot, diag
+from numpy import array, arange, matrix, linalg, round, delete, dot, diag, meshgrid, vstack
 
 
 class SolvePackage:
@@ -492,51 +492,21 @@ def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounde
     
     '''
 
-    values = [x for x in df["x"].values]
-    inputs = list()
-    l = len(values)
+    of,rn = meshgrid(offset_range,rounder_range)
 
-    values = list()
-    error = list()
+    of_rn = vstack(of,+rn)
 
-    final_df = dfop.DataFrame
+    of_rn = zip(of_rn[0],of_rn[1])
 
-    for i, input in enumerate(values):
-
-        if i + 1 >= l:
-            break
-
-        inputs.append((input + values[i+1])/2)
-
-    for off in offset_range:
-
-        for rnd in rounder_range:
-
-            pcys = PCI(df,offset=off,rounder=rnd)
-
-            for x in inputs:
-
-                v_r = function(x)
-                v_a = pcys.predict(x)
-
-                final_df._append(
-                    {
-                        "offset": off,
-                        "rounder":rnd,
-                        "x":x,
-                        "valor real":v_r,
-                        "valor aproximado": v_a,
-                        "error": relative_error(v_r,v_a)
-                    }
-                )
+    
 
 
 if __name__ == "__main__":
     
-    try:
-        iter(2)
-        print("iterable")
-    except TypeError:
-        print("no iterable")
-    
+    a = [1,2,3]   
+    b = ["a","b","c"]
+    c = ["?","#","$"]
+
+    print(list(zip(a,b,c)))
+
     pass
