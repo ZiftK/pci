@@ -488,13 +488,17 @@ def relative_error(real_val,aprox_val):
     '''
     return 100*abs((real_val-aprox_val)/real_val)
 
-def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounder_range : list):
+
+def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounder_range : list, show_progress = True):
     '''
     
     '''
 
+    if show_progress:
+        from sys import stdout
+        pass
+
     rtn_df = dfop.DataFrame()
-    print(type(df))
 
     inputs = list()
     x_vals = list(df["x"].values)
@@ -509,11 +513,21 @@ def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounde
 
     product = list(cart_pdct(offset_range,rounder_range,inputs))
 
-    print(f"Elements count {len(product)}...\n\n")
 
-    for element in product:
+    iters = len(product)
+    
+    print(f"\n\nElements count {iters}...\n\n")
+
+    for i,element in enumerate(product):
         
-        print(element)
+        if show_progress:
+
+            cur = i / iters
+            bar = "=" * int(50 * cur)
+            spaces = " " * (50 - len(bar))
+            stdout.write(f"\r\tProcess: [{bar}{spaces}] {int(cur * 100)}% - {i} of {iters}")
+            stdout.flush()
+            
         real_val = function(element[2])
         aprox_val = PCI(df,offset=element[0],rounder = element[1]).predict(element[2])
 
@@ -537,6 +551,5 @@ def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounde
 
 if __name__ == "__main__":
     
-
-
+    
     pass
