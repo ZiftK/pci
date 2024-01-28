@@ -11,7 +11,8 @@ import logging as lg
 import mathematics.aop as aop 
 import mathematics.dfop as dfop
 
-from numpy import array, arange, matrix, linalg, round, delete, dot, diag, meshgrid, vstack
+from numpy import array, arange, matrix, linalg, round, delete, dot, diag
+from itertools import product as cart_pdct
 
 
 class SolvePackage:
@@ -492,21 +493,50 @@ def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounde
     
     '''
 
-    of,rn = meshgrid(offset_range,rounder_range)
+    rtn_df = dfop.DataFrame()
+    print(type(df))
 
-    of_rn = vstack(of,+rn)
+    inputs = list()
+    x_vals = list(df["x"].values)
+    lenght = len(x_vals)
 
-    of_rn = zip(of_rn[0],of_rn[1])
+    for i,x in enumerate(x_vals):
 
+        if i + 1 >= lenght:
+            break
+
+        inputs.append((x + x_vals[i+1])/2)
+
+    product = list(cart_pdct(offset_range,rounder_range,inputs))
+
+    print(f"Elements count {len(product)}...\n\n")
+
+    for element in product:
+        
+        print(element)
+        real_val = function(element[2])
+        aprox_val = PCI(df,offset=element[0],rounder = element[1]).predict(element[2])
+
+        rtn_df = rtn_df._append(
+            {
+                "offset": element[0],
+                "rounder": element[1],
+                "x": element[2],
+                "valor real": real_val,
+                "valor aproximado": aprox_val,
+                "error %": relative_error(real_val,aprox_val)
+
+            },
+            ignore_index = True
+
+        )
+
+    return rtn_df
     
 
 
 if __name__ == "__main__":
     
-    a = [1,2,3]   
-    b = ["a","b","c"]
-    c = ["?","#","$"]
 
-    print(list(zip(a,b,c)))
 
     pass
