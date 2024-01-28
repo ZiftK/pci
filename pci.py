@@ -13,6 +13,7 @@ import mathematics.dfop as dfop
 
 from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 from itertools import product as cart_pdct
+from testing.testing import exec_time
 
 
 class SolvePackage:
@@ -488,7 +489,7 @@ def relative_error(real_val,aprox_val):
     '''
     return 100*abs((real_val-aprox_val)/real_val)
 
-
+@exec_time
 def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounder_range : list, show_progress = True):
     '''
     
@@ -516,7 +517,7 @@ def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounde
 
     iters = len(product)
     
-    print(f"\n\nElements count {iters}...\n\n")
+    print(f"\n\nElements count {iters:,}...\n\n")
 
     for i,element in enumerate(product):
         
@@ -525,7 +526,7 @@ def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounde
             cur = i / iters
             bar = "=" * int(50 * cur)
             spaces = " " * (50 - len(bar))
-            stdout.write(f"\r\tProcess: [{bar}{spaces}] {int(cur * 100)}% - {i} of {iters}")
+            stdout.write(f"\r\tProcess: [{bar}{spaces}] {int(cur * 100)}% - {i:,} of {iters:,}")
             stdout.flush()
             
         real_val = function(element[2])

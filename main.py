@@ -15,4 +15,4 @@ df = pd.read_csv("csvs\sin.csv")
 
 new_df = pci.uniform_data_range(df,sin,[x for x in range(1,10)],[y for y in range(1,20)])
 
-print(new_df)
+new_df.to_csv("prueba-sin-1_75-0_5-sin_csv.csv",index = False)
