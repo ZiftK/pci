@@ -5,10 +5,10 @@ from numpy import sin
 pd.set_option("display.max_rows",None)
 
 
-psys = pci.PCI("csvs/sin.csv",offset=1,rounder=1)
+# psys = pci.PCI("csvs/sin.csv",offset=1,rounder=1)
 
-print(psys.predict( 50,0.1))
-print(psys.gggg())
+# print(psys.predict( 50,0.1))
+# print(psys.static_sp)
 
 # df = pd.read_csv("csvs\sin.csv")
 

@@ -382,12 +382,6 @@ class PCI:
         self.__tst = None
         self.__tst2 = None
         
-
-
-    def gggg(self):
-
-        return self.__ssp
-    
     
     def __train(self, point, solve_package : SolvePackage):
         '''
@@ -479,6 +473,17 @@ class PCI:
 
         print(self.__dsp.dr.extract_df(0,self.__dsp.dr.rows_count()))
         print(f"------{self.__dsp.dr.rows_count()}")
+
+
+        #hd:                    Properties                      
+
+    @property
+    def static_sp(self):
+        return self.__ssp
+    
+    @property
+    def dynamic_sp(self):
+        return self.__dsp
 
 
 def relative_error(real_val,aprox_val):
