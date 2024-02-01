@@ -444,35 +444,68 @@ class PCI:
 
     def normalize(self,step = None,norm_round = 5):
         '''
-        Flat dynamic data frame using normal as difference value
+        Fill in the empty spaces in the dataset by interpolating entries in multiples of the 
+        'step' from the initial value to the final value, generating approximate outputs for each entry
+
+        Params
+        -------
+        step -> The variable 'step' represents the normalization step. If a 'step'
+        of 1 is used, it will cause the dataset to be normalized to multiples of 1 for the inputs.
+
+        norm_round -> It is the number of decimals to round in the normalization approximations
         '''
         #TODO: Document normalize function and refactor. Fix normalize bug
         
+        # If the 'step' variable is not specified, 
+        # it will be taken as the average difference 
+        # between input samples in the original dataset.
         if step == None:
             step = self.__dsp.dr.get_mean_diff("x")
 
+        # cur_val' represents the current interpolated input value.
+        # Before the first iteration, we calculate this value by
+        # taking the first entry in our dataset and adding the value
+        # of 'step'. 'cur_val' is rounded because adding 'step' does
+        # not yield an exact value, but a very close, almost infinitesimally close,
+        # approximate value. However, when comparing this value with the current 
+        # entries in the dataset, a difference is obtained, and therefore,
+        # the algorithm enters already established approximations.
+        # Rounding solves this issue
+            
         cur_val = round(self.__dsp.dr.get_value("x",0) + step,norm_round)
+
+        # The new values must be inserted at a specific index, for which we use the variable 'indx'
         indx = 1
 
         while True:
 
+            
+            # If the value to approximate is outside the ranges
+            # of the original dataset, we are not interested 
+            # in continuing the approximation, so we break the loop.
             if not self.__dsp.dr.is_inside(cur_val,"x"):
 
                 break
+            
+            # We are interested in adding values to the dataset, 
+            # but if the 'step' is a multiple of any entry in 
+            # the original dataset, we want to omit that data, 
+            # as it is already present in the original set
 
             if  not self.__dsp.dr.is_in_column(cur_val,"x"):
-                print(f"\n------------{cur_val}--------\n")
+
+                # interpolate new value
                 pdct_val = self.predict(cur_val)
 
+                # add relation to data set
                 self.__dsp.dr.soft_insert({"x":cur_val,"y":pdct_val},indx)
 
-
+            # After each iteration, we add 'step' to the 
+            # current value, and round it using the specified rounder.
+            # We also increment the position index by one
             cur_val += step
-            indx += 1
             cur_val = round(cur_val, norm_round)
-
-        print(self.__dsp.dr.extract_df(0,self.__dsp.dr.rows_count()))
-        print(f"------{self.__dsp.dr.rows_count()}")
+            indx += 1
 
 
         #hd:                    Properties                      
@@ -495,7 +528,12 @@ def relative_error(real_val,aprox_val):
 
 
 @exec_time
-def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounder_range : list, show_progress = True):
+def uniform_data_range(
+                    df: dfop.DataFrame, 
+                    function, 
+                    offset_range : list, 
+                    rounder_range : list, 
+                    show_progress = True):
     '''
     Generate predictions for all possible combinations using the 
     value ranges of 'offset' and 'rounder,' as well as intermediate values for each dataset.
