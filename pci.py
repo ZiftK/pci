@@ -5,9 +5,6 @@ Created on Mon Oct 23 17:14:46 2023
 @author: ZiftK
 """
 
-
-
-import logging as lg
 import mathematics.aop as aop 
 import mathematics.dfop as dfop
 
@@ -387,7 +384,9 @@ class PCI:
         
 
 
-        
+    def gggg(self):
+
+        return self.__ssp
     
     
     def __train(self, point, solve_package : SolvePackage):
@@ -449,7 +448,6 @@ class PCI:
         return self.__dsp.apply_pol(point)
 
 
-
     def normalize(self,step = None,norm_round = 5):
         '''
         Flat dynamic data frame using normal as difference value
@@ -489,29 +487,72 @@ def relative_error(real_val,aprox_val):
     '''
     return 100*abs((real_val-aprox_val)/real_val)
 
+
+
 @exec_time
 def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounder_range : list, show_progress = True):
     '''
-    
+    Generate predictions for all possible combinations using the 
+    value ranges of 'offset' and 'rounder,' as well as intermediate values for each dataset.
+
+    Params
+    ---------
+    df -> This is a DataFrame that will be used to make tests
+
+    function -> This parameter should be a function or an 
+    executable that returns a real value for the 'x' input. 
+    This real value will be compared with the approximate value 
+    to calculate the approximation error.
+
+    offset_range -> It is a list of values that represents all 
+    offsets that will be used to train the PCI system for all approximations.
+
+    rounder_range -> It is a list of values that represents all
+    rounders that will be used to train the PCI system for all aproximations.
+
+    [optional] show_progress -> If set to True, print a loading bar that shows
+    the progress of the data approximations. If set to False, this loading bar is not shown
     '''
 
+    # If show_progress is True, import sys.stdout to
+    # show loading bar
     if show_progress:
         from sys import stdout
         pass
 
+    # Initialize new DataFrame to return it
     rtn_df = dfop.DataFrame()
 
+    # Initialize a new list to store the
+    # values that will be used as inputs
+    # to make approximations with the PCI system
     inputs = list()
+
+    # Extract the values from the 'x' 
+    # column of the DataFrame
     x_vals = list(df["x"].values)
+
+    # Get the count of input values
     lenght = len(x_vals)
 
+    # The values with which the PCI system's ability
+    # to make predictions will be evaluated will not
+    # be the exact values in the 'x' column of the dataset.
+    # Instead, intermediate values will be used as it is
+    # estimated that these carry a greater margin of error.
+    # To create this set of evaluation inputs, all values from
+    # the 'x' column of the initial dataset will be considered,
+    # and the average of each contiguous set of values
+    # will be calculated
     for i,x in enumerate(x_vals):
 
+        # If index is out of index range from values list
         if i + 1 >= lenght:
-            break
+            break # break loop
 
         inputs.append((x + x_vals[i+1])/2)
 
+    
     product = list(cart_pdct(offset_range,rounder_range,inputs))
 
 
