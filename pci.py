@@ -390,7 +390,29 @@ class PCI:
         solve_package.train(point,self.__offset,self.__rounder)
 
 
-    
+    def force_predict(self,point,ep_step = 0.5):
+        '''
+        Train PCI system around point using it as pivot, forcing re training
+        '''
+        point = round(point,5)
+        
+        # check if point is inside static effective data range or
+        # dynamic effective data range
+
+        # check if inside static effective data range
+        if self.__ssp.dr.is_inside(point,"x"):
+
+            self.__ssp.train(point,self.__offset,self.__rounder)
+            return self.__ssp.apply_pol(point)
+
+        # check if inside dynamic effective data range
+        elif self.__dsp.dr.is_inside(point,"x"):
+            self.__dsp.train(point,self.__offset,self.__rounder)
+            return self.__dsp.apply_pol(point)
+        
+
+        pass
+
     def predict(self,point,ep_step = 0.5):
         '''
         Get aprox value from trained system
@@ -533,7 +555,8 @@ def uniform_data_range(
                     function, 
                     offset_range : list, 
                     rounder_range : list, 
-                    show_progress = True):
+                    show_progress = True,
+                    force_train = False):
     '''
     Generate predictions for all possible combinations using the 
     value ranges of 'offset' and 'rounder,' as well as intermediate values for each dataset.
@@ -596,26 +619,39 @@ def uniform_data_range(
         inputs.append((x + x_vals[i+1])/2)
 
     
+    # To avoid using three nested for loops, we use the Cartesian product
+    # to calculate all possible combinations for different values of 
+    # 'offset,' 'rounder,' and 'x'.
     product = list(cart_pdct(offset_range,rounder_range,inputs))
 
-
+    # iteration count
     iters = len(product)
     
     print(f"\n\nElements count {iters:,}...\n\n")
 
+
     for i,element in enumerate(product):
-        
+        # For each possible combination of (offset, rounder, x),
+        # we will generate a PCI approximation for the trio of values.
+
         if show_progress:
+            # If the 'show_progress' variable was set
+            # to true, display a loading bar
 
             cur = i / iters
             bar = "=" * int(50 * cur)
             spaces = " " * (50 - len(bar))
             stdout.write(f"\r\tProcess: [{bar}{spaces}] {int(cur * 100)}% - {i:,} of {iters:,}")
             stdout.flush()
-            
+        
+        # Get real val evaluating in real function
         real_val = function(element[2])
-        aprox_val = PCI(df,offset=element[0],rounder = element[1]).predict(element[2])
-
+        # Get approximate value evaluating in PCI system
+        if not force_train:
+            aprox_val = PCI(df,offset=element[0],rounder = element[1]).predict(element[2])
+        else:
+            aprox_val =  PCI(df,offset=element[0],rounder = element[1]).force_predict(element[2])
+        # Struct to data frame
         rtn_df = rtn_df._append(
             {
                 "offset": element[0],
