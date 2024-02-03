@@ -5,13 +5,12 @@ Created on Mon Oct 23 17:14:46 2023
 @author: ZiftK
 """
 
-
-
-import logging as lg
 import mathematics.aop as aop 
 import mathematics.dfop as dfop
 
 from numpy import array, arange, matrix, linalg, round, delete, dot, diag
+from itertools import product as cart_pdct
+from testing.testing import exec_time
 
 
 class SolvePackage:
@@ -359,21 +358,6 @@ class PCI:
         self.__tst = None
         self.__tst2 = None
         
-
-
-        
-    def __apply_pol(self,point, solve_package : SolvePackage):
-        '''
-        Apply polinomial solution to specyfic point
-        '''
-        #* make prediction
-        #pow point to each value in exponents array
-        a = aop.valpow(float(point),solve_package.exp)
-        # multiply each value in solve point exponents 
-        # to each value in solve coefficients
-        pdct = aop.amult(solve_package.coef,a)
-        #return sum of array
-        return sum(pdct)
     
     def __train(self, point, solve_package : SolvePackage):
         '''
@@ -382,25 +366,29 @@ class PCI:
         solve_package.train(point,self.__offset,self.__rounder)
 
 
-    def __update_dynamic(self,point,step = 0.5):
+    def force_predict(self,point,ep_step = 0.5):
         '''
-        Inserts a value outside the original dynamic range, 
-        offset by a value defined by 'step' towards the approximation point
+        Train PCI system around point using it as pivot, forcing re training
         '''
+        point = round(point,5)
+        
+        # check if point is inside static effective data range or
+        # dynamic effective data range
 
-        in_val, indx = self.__dsp.update_data(point,self.__offset)
+        # check if inside static effective data range
+        if self.__ssp.dr.is_inside(point,"x"):
 
-        # approximate the value outside the dynamic range using the dynamic SolvePackage
-        out_val = self.__apply_pol(in_val + step,self.__dsp)
+            self.__ssp.train(point,self.__offset,self.__rounder)
+            return self.__ssp.apply_pol(point)
 
-        # insert value in selected index
-        self.__dsp.dr.insert(indx,in_val + step,"x")
+        # check if inside dynamic effective data range
+        elif self.__dsp.dr.is_inside(point,"x"):
+            self.__dsp.train(point,self.__offset,self.__rounder)
+            return self.__dsp.apply_pol(point)
+        
 
-        # set value in "y" column (aproximate value)
-        self.__dsp.dr.set_value(indx,out_val,"y")
+        pass
 
-
-    
     def predict(self,point,ep_step = 0.5):
         '''
         Get aprox value from trained system
@@ -439,109 +427,97 @@ class PCI:
             # check if point is inside dynamic range
             in_dynamic = self.__dsp.dr.is_inside(point,"x")
             
-            if in_dynamic: #* if point is in dynamic range
-                
-                # train system in dynamic solve package
-                self.__train(point, self.__dsp)
-                # apply polinomial solution to dynamic solve package
-                return self.__apply_pol(point,self.__dsp)
-                break #break while
+        if in_dynamic: #* if point is in dynamic range
             
-            # In case the point is outside the dynamic range, 
-            # the dynamic range should be updated by providing 
-            # feedback until the desired value is reached; 
-            # this is done by the update_dynamic function
-            self.__update_dynamic(point,ep_step)
-    
-    
-    
-
-def pcit_ov(data, offset_range, rounder, values_range)-> dict:
-    '''
-    Iterate through the offset range
-    and set the PCI system for each offset in the range. 
-    Then, approximate each value in the values range using each 
-    one of the offsets set
-    '''
-
-    # aprox_values is a dictionary that stores numpy arrays. 
-    # This is because for each offset in the offset range, a 
-    # list of approximate values will be calculated.
-    # Each key of the ‘aprox_values’ dictionary represents 
-    # the offset that will be calculated, and its content 
-    # represents the output PCI predicted values from the 
-    # ‘values_range’ as inputs.
-
-    aprox_values : dict = dict() # aproximate values dictionary
-    current_values : list = list() # ccurrent PCI predicted values for each step
-
-    # iterate throught offset range.
-    # For each offset in 'offset_range'
-    # a list of PCI predicted values will
-    # be calculate.
-    for current_off in offset_range: 
-
-        # debug message
-        print(f"\n\nPCI offset variable** current offset: {current_off}")
-
-        # init pci system with offset as current offset
-        pcys = PCI(data, rounder = rounder, offset = current_off)
+            # apply polinomial solution to dynamic solve package
+            return self.__apply_pol(point,self.__dsp)
         
-        # iterate throught values range.
-        # For each value in the ‘values_range’, 
-        # a PCI predicted value will be calculated.
-        for value in values_range: 
+        # extrapolation loop
+        while not self.__dsp.is_inside_ef(point,"x"):
 
-            print(f"\t current value: {value}")
+            self.__dsp.train(point,self.__offset,self.__rounder)
 
-            # aproximate values
-            current_values.append(pcys.predict(value))
+            self.__dsp.update_out_data(point,ep_step)
 
-        # vectorize and save values
-        aprox_values[current_off] = array(current_values)
+        return self.__dsp.apply_pol(point)
 
-        # clear current values
-        current_values.clear()
 
-        del pcys # delete pci system
+    def normalize(self,step = None,norm_round = 5):
+        '''
+        Fill in the empty spaces in the dataset by interpolating entries in multiples of the 
+        'step' from the initial value to the final value, generating approximate outputs for each entry
 
-    return aprox_values # return aproximate values
+        Params
+        -------
+        step -> The variable 'step' represents the normalization step. If a 'step'
+        of 1 is used, it will cause the dataset to be normalized to multiples of 1 for the inputs.
 
-def pcit_rv(data, offset, rounder_range, values_range)-> dict:
-    '''
-    Iterate through the rounder range and set the PCI
-    system for each rounder in the range. Then, aproximate
-    each value in the values range using each one of the
-    rounder set
-    '''
+        norm_round -> It is the number of decimals to round in the normalization approximations
+        '''
+        #TODO: Document normalize function and refactor. Fix normalize bug
+        
+        # If the 'step' variable is not specified, 
+        # it will be taken as the average difference 
+        # between input samples in the original dataset.
+        if step == None:
+            step = self.__dsp.dr.get_mean_diff("x")
 
-    aprox_values : dict = dict() # aproximate values dictionary
-    current_values : list = list() 
+        # cur_val' represents the current interpolated input value.
+        # Before the first iteration, we calculate this value by
+        # taking the first entry in our dataset and adding the value
+        # of 'step'. 'cur_val' is rounded because adding 'step' does
+        # not yield an exact value, but a very close, almost infinitesimally close,
+        # approximate value. However, when comparing this value with the current 
+        # entries in the dataset, a difference is obtained, and therefore,
+        # the algorithm enters already established approximations.
+        # Rounding solves this issue
+            
+        cur_val = round(self.__dsp.dr.get_value("x",0) + step,norm_round)
 
-    for current_round in rounder_range: # iterate throught offset range
+        # The new values must be inserted at a specific index, for which we use the variable 'indx'
+        indx = 1
 
-        # debug message
-        print(f"\n\nPCI rounder variable** current round: {current_round}")
+        while True:
 
-        # init pci system
-        pcys = PCI(data,rounder = current_round, offset = offset)
+            
+            # If the value to approximate is outside the ranges
+            # of the original dataset, we are not interested 
+            # in continuing the approximation, so we break the loop.
+            if not self.__dsp.dr.is_inside(cur_val,"x"):
 
-        for value in values_range: # iterate throught values range
+                break
+            
+            # We are interested in adding values to the dataset, 
+            # but if the 'step' is a multiple of any entry in 
+            # the original dataset, we want to omit that data, 
+            # as it is already present in the original set
 
-            print(f"\t current value: {value}")
+            if  not self.__dsp.dr.is_in_column(cur_val,"x"):
 
-            # aproximate values
-            current_values.append(pcys.predict(value))
+                # interpolate new value
+                pdct_val = self.predict(cur_val)
 
-        # vectorize values and save it
-        aprox_values[current_round] = array(current_values)
+                # add relation to data set
+                self.__dsp.dr.soft_insert({"x":cur_val,"y":pdct_val},indx)
 
-        # clear current values
-        current_values.clear()
+            # After each iteration, we add 'step' to the 
+            # current value, and round it using the specified rounder.
+            # We also increment the position index by one
+            cur_val += step
+            cur_val = round(cur_val, norm_round)
+            indx += 1
 
-        del pcys # delete pci system
 
-    return aprox_values # return aproximate values
+        #hd:                    Properties                      
+
+    @property
+    def static_sp(self):
+        return self.__ssp
+    
+    @property
+    def dynamic_sp(self):
+        return self.__dsp
+
 
 def relative_error(real_val,aprox_val):
     '''
@@ -549,84 +525,130 @@ def relative_error(real_val,aprox_val):
     '''
     return 100*abs((real_val-aprox_val)/real_val)
 
-def compare(data, real_function,values_range, offset, rounder):
 
-    # sp: ------------- Vars -------------
 
-    # variables to set pci evaluate function
-    offset_iter, rounder_iter = True, True
-    # pci evaluate function
-    pci_func = None
-    # real function values
-    real_values = list()
-    # aproximate pci values
-    aprox_values = list()
-    # relative error
-    error = 0
-    # errors dictionary
-    error_dict = dict()
+@exec_time
+def uniform_data_range(
+                    df: dfop.DataFrame, 
+                    function, 
+                    offset_range : list, 
+                    rounder_range : list, 
+                    show_progress = True,
+                    force_train = False):
+    '''
+    Generate predictions for all possible combinations using the 
+    value ranges of 'offset' and 'rounder,' as well as intermediate values for each dataset.
 
-    # sp: ------------- Check iterables -------------
+    Params
+    ---------
+    df -> This is a DataFrame that will be used to make tests
 
-    try:# check if offset is iterable
-        iter(offset)
-    except TypeError:# save it
-        offset_iter = False
+    function -> This parameter should be a function or an 
+    executable that returns a real value for the 'x' input. 
+    This real value will be compared with the approximate value 
+    to calculate the approximation error.
 
-    try:# chacj if rounder is iterable
-        iter(rounder) 
-    except TypeError:# save it
-        rounder_iter = False
+    offset_range -> It is a list of values that represents all 
+    offsets that will be used to train the PCI system for all approximations.
 
-    # Check whether offset or rounder is iterable because the 
-    # function only supports one of the two being iterable
+    rounder_range -> It is a list of values that represents all
+    rounders that will be used to train the PCI system for all aproximations.
 
-    # sp: ------------- Def pci function -------------
+    [optional] show_progress -> If set to True, print a loading bar that shows
+    the progress of the data approximations. If set to False, this loading bar is not shown
+    '''
 
-    # if offset is iterable and rounder is not
-    if offset_iter and not rounder_iter:
+    # If show_progress is True, import sys.stdout to
+    # show loading bar
+    if show_progress:
+        from sys import stdout
+        pass
 
-        # set pci evaluate function as pci offset variable
-        pci_func = pcit_ov
+    # Initialize new DataFrame to return it
+    rtn_df = dfop.DataFrame()
 
-    # if rounder is iterable and offset is not
-    elif rounder_iter and not offset_iter:
+    # Initialize a new list to store the
+    # values that will be used as inputs
+    # to make approximations with the PCI system
+    inputs = list()
 
-        # set pci evaluate function as pci rounder variable
-        pci_func = pcit_rv
-    else:
-        raise Exception("Offset and rounder cant vary at the same time")
+    # Extract the values from the 'x' 
+    # column of the DataFrame
+    x_vals = list(df["x"].values)
+
+    # Get the count of input values
+    lenght = len(x_vals)
+
+    # The values with which the PCI system's ability
+    # to make predictions will be evaluated will not
+    # be the exact values in the 'x' column of the dataset.
+    # Instead, intermediate values will be used as it is
+    # estimated that these carry a greater margin of error.
+    # To create this set of evaluation inputs, all values from
+    # the 'x' column of the initial dataset will be considered,
+    # and the average of each contiguous set of values
+    # will be calculated
+    for i,x in enumerate(x_vals):
+
+        # If index is out of index range from values list
+        if i + 1 >= lenght:
+            break # break loop
+
+        inputs.append((x + x_vals[i+1])/2)
+
     
-    # sp: ------------- Calculate values -------------
+    # To avoid using three nested for loops, we use the Cartesian product
+    # to calculate all possible combinations for different values of 
+    # 'offset,' 'rounder,' and 'x'.
+    product = list(cart_pdct(offset_range,rounder_range,inputs))
 
-    # calculate aprox values
-    aprox_values = pci_func(data, offset,rounder,values_range)
-
-    #* Calculate real values
-    for value in values_range:
-        real_values.append(real_function(value))
-
-    #sp: ------------- Calculate error -------------
-
-    # vectorice lists
-    real_values =  array(real_values)
-
-    for key in aprox_values.keys():
-        error = relative_error(real_values,aprox_values[key])
-        error_dict[key] = error
+    # iteration count
+    iters = len(product)
+    
+    print(f"\n\nElements count {iters:,}...\n\n")
 
 
+    for i,element in enumerate(product):
+        # For each possible combination of (offset, rounder, x),
+        # we will generate a PCI approximation for the trio of values.
 
-    return error_dict
+        if show_progress:
+            # If the 'show_progress' variable was set
+            # to true, display a loading bar
 
+            cur = i / iters
+            bar = "=" * int(50 * cur)
+            spaces = " " * (50 - len(bar))
+            stdout.write(f"\r\tProcess: [{bar}{spaces}] {int(cur * 100)}% - {i:,} of {iters:,}")
+            stdout.flush()
+        
+        # Get real val evaluating in real function
+        real_val = function(element[2])
+        # Get approximate value evaluating in PCI system
+        if not force_train:
+            aprox_val = PCI(df,offset=element[0],rounder = element[1]).predict(element[2])
+        else:
+            aprox_val =  PCI(df,offset=element[0],rounder = element[1]).force_predict(element[2])
+        # Struct to data frame
+        rtn_df = rtn_df._append(
+            {
+                "offset": element[0],
+                "rounder": element[1],
+                "x": element[2],
+                "valor real": real_val,
+                "valor aproximado": aprox_val,
+                "error %": relative_error(real_val,aprox_val)
+
+            },
+            ignore_index = True
+
+        )
+
+    return rtn_df
+    
 
 
 if __name__ == "__main__":
     
-    try:
-        iter(2)
-        print("iterable")
-    except TypeError:
-        print("no iterable")
     
     pass
