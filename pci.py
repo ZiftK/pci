@@ -11,7 +11,7 @@ import logging as lg
 import mathematics.aop as aop 
 import mathematics.dfop as dfop
 
-from numpy import array, arange, matrix, linalg, round, delete, dot, diag, meshgrid, vstack
+from numpy import array, arange, matrix, linalg, round, delete, dot, diag
 
 
 class SolvePackage:
@@ -19,7 +19,7 @@ class SolvePackage:
     The Resolution Package is a class designed to encapsulate a range of 
     data along with its corresponding limits and values used in the PCI approximation. 
     Essentially, it is a class that enables PCI to locate the values of its dynamic or static data.
-    
+
     Properties
     ---------
 
@@ -62,7 +62,7 @@ class SolvePackage:
         try:#try check if inside effective range
             # is inside effecitve limits
             c1 = point >= self.dr.get_value(column_name, self.__le)
-            c2 = point <= self.dr.get_value(column_name,self.__ue)
+            c2 = point <= self.df.get_value(column_name,self.__ue)
             return c1 and c2
         except TypeError:
             #if effective limits are null, set condition to false
@@ -76,9 +76,6 @@ class SolvePackage:
         the data frame within the effective range.
         '''
         return self.dr.extract_df(self.__le,self.__ue)
-    
-    
-        
     
 
     #hd: Train methods
@@ -202,7 +199,7 @@ class SolvePackage:
         self.__exp = delete(self.__exp,del_index)
 
 
-    def update_out_data(self,point, step = 0.5):
+    def update_data(self,point, step = 0.5):
         '''
         Inserts a value outside the original data range, 
         offset by a value defined by 'step' towards the approximation point
@@ -225,7 +222,7 @@ class SolvePackage:
         # *last inside value
         # It refers to the nearest value to the desired extrapolation 
         # within the dynamic range 
-        in_val = None 
+        in_val = None
 
         #* insert index 
         # It refers to the index where the new data will be inserted
@@ -268,29 +265,8 @@ class SolvePackage:
             # the index is the effective upper limit, as the data is to the right
             # of the dynamic range
             indx = self.__ue
-            
-        
-        # approximate the value outside the dynamic range using the dynamic SolvePackage
-        out_val = in_val + step
-        extrapol_val = self.apply_pol(out_val)
 
-        # insert value in selected index
-        self.__dr.soft_insert({"x":out_val,"y":extrapol_val},indx)
-
-
-    
-    def apply_pol(self,point):
-        '''
-        Apply polinomial solution to specyfic point
-        '''
-        #* make prediction
-        #pow point to each value in exponents array
-        a = aop.valpow(float(point),self.__exp)
-        # multiply each value in solve point exponents 
-        # to each value in solve coefficients
-        pdct = aop.amult(self.__coef,a)
-        #return sum of array
-        return sum(pdct)
+        return in_val, indx
 
     
 
@@ -386,13 +362,42 @@ class PCI:
 
 
         
-    
+    def __apply_pol(self,point, solve_package : SolvePackage):
+        '''
+        Apply polinomial solution to specyfic point
+        '''
+        #* make prediction
+        #pow point to each value in exponents array
+        a = aop.valpow(float(point),solve_package.exp)
+        # multiply each value in solve point exponents 
+        # to each value in solve coefficients
+        pdct = aop.amult(solve_package.coef,a)
+        #return sum of array
+        return sum(pdct)
     
     def __train(self, point, solve_package : SolvePackage):
         '''
         
         '''
         solve_package.train(point,self.__offset,self.__rounder)
+
+
+    def __update_dynamic(self,point,step = 0.5):
+        '''
+        Inserts a value outside the original dynamic range, 
+        offset by a value defined by 'step' towards the approximation point
+        '''
+
+        in_val, indx = self.__dsp.update_data(point,self.__offset)
+
+        # approximate the value outside the dynamic range using the dynamic SolvePackage
+        out_val = self.__apply_pol(in_val + step,self.__dsp)
+
+        # insert value in selected index
+        self.__dsp.dr.insert(indx,in_val + step,"x")
+
+        # set value in "y" column (aproximate value)
+        self.__dsp.dr.set_value(indx,out_val,"y")
 
 
     
@@ -408,11 +413,11 @@ class PCI:
 
         # check if inside static effective data range
         if self.__ssp.is_inside_ef(point,"x"):
-            return self.__ssp.apply_pol(point)
+            return self.__apply_pol(point,self.__ssp)
 
         # check if inside dynamic effective data range
         elif self.__dsp.is_inside_ef(point,"x"):
-            return self.__dsp.apply_pol(point)
+            return self.__apply_pol(point,self.__dsp)
         
         # it is inside static limits?
         elif self.__ssp.dr.is_inside(point,"x"):
@@ -421,65 +426,122 @@ class PCI:
             self.__train(point, self.__ssp)
 
             # apply polinomial solution to static solve package
-            return self.__ssp.apply_pol(point)
+            return self.__apply_pol(point,self.__ssp)
 
-        # It has been previously verified that the point to approximate 
-        # is outside the dynamic effective range and the 
-        # static effective range. It has also been confirmed to be 
-        # outside the static range, so the only available options are 
-        # that it is within the dynamic range or it is outside all ranges.
+        while True: #* train loop
 
-        # check if point is inside dynamic range
-        in_dynamic = self.__dsp.dr.is_inside(point,"x")
+            # It has been previously verified that the point to approximate 
+            # is outside the dynamic effective range and the 
+            # static effective range. It has also been confirmed to be 
+            # outside the static range, so the only available options are 
+            # that it is within the dynamic range or it is outside all ranges.
+
+            # check if point is inside dynamic range
+            in_dynamic = self.__dsp.dr.is_inside(point,"x")
             
-        if in_dynamic: #* if point is in dynamic range
+            if in_dynamic: #* if point is in dynamic range
+                
+                # train system in dynamic solve package
+                self.__train(point, self.__dsp)
+                # apply polinomial solution to dynamic solve package
+                return self.__apply_pol(point,self.__dsp)
+                break #break while
             
-            # apply polinomial solution to dynamic solve package
-            return self.__apply_pol(point,self.__dsp)
+            # In case the point is outside the dynamic range, 
+            # the dynamic range should be updated by providing 
+            # feedback until the desired value is reached; 
+            # this is done by the update_dynamic function
+            self.__update_dynamic(point,ep_step)
+    
+    
+    
+
+def pcit_ov(data, offset_range, rounder, values_range)-> dict:
+    '''
+    Iterate through the offset range
+    and set the PCI system for each offset in the range. 
+    Then, approximate each value in the values range using each 
+    one of the offsets set
+    '''
+
+    # aprox_values is a dictionary that stores numpy arrays. 
+    # This is because for each offset in the offset range, a 
+    # list of approximate values will be calculated.
+    # Each key of the ‘aprox_values’ dictionary represents 
+    # the offset that will be calculated, and its content 
+    # represents the output PCI predicted values from the 
+    # ‘values_range’ as inputs.
+
+    aprox_values : dict = dict() # aproximate values dictionary
+    current_values : list = list() # ccurrent PCI predicted values for each step
+
+    # iterate throught offset range.
+    # For each offset in 'offset_range'
+    # a list of PCI predicted values will
+    # be calculate.
+    for current_off in offset_range: 
+
+        # debug message
+        print(f"\n\nPCI offset variable** current offset: {current_off}")
+
+        # init pci system with offset as current offset
+        pcys = PCI(data, rounder = rounder, offset = current_off)
         
-        # extrapolation loop
-        while not self.__dsp.is_inside_ef(point,"x"):
+        # iterate throught values range.
+        # For each value in the ‘values_range’, 
+        # a PCI predicted value will be calculated.
+        for value in values_range: 
 
-            self.__dsp.train(point,self.__offset,self.__rounder)
+            print(f"\t current value: {value}")
 
-            self.__dsp.update_out_data(point,ep_step)
+            # aproximate values
+            current_values.append(pcys.predict(value))
 
-        return self.__dsp.apply_pol(point)
+        # vectorize and save values
+        aprox_values[current_off] = array(current_values)
 
+        # clear current values
+        current_values.clear()
 
+        del pcys # delete pci system
 
-    def normalize(self,step = None,norm_round = 5):
-        '''
-        Flat dynamic data frame using normal as difference value
-        '''
-        #TODO: Document normalize function and refactor. Fix normalize bug
-        
-        if step == None:
-            step = self.__dsp.dr.get_mean_diff("x")
+    return aprox_values # return aproximate values
 
-        cur_val = round(self.__dsp.dr.get_value("x",0) + step,norm_round)
-        indx = 1
+def pcit_rv(data, offset, rounder_range, values_range)-> dict:
+    '''
+    Iterate through the rounder range and set the PCI
+    system for each rounder in the range. Then, aproximate
+    each value in the values range using each one of the
+    rounder set
+    '''
 
-        while True:
+    aprox_values : dict = dict() # aproximate values dictionary
+    current_values : list = list() 
 
-            if not self.__dsp.dr.is_inside(cur_val,"x"):
+    for current_round in rounder_range: # iterate throught offset range
 
-                break
+        # debug message
+        print(f"\n\nPCI rounder variable** current round: {current_round}")
 
-            if  not self.__dsp.dr.is_in_column(cur_val,"x"):
-                print(f"\n------------{cur_val}--------\n")
-                pdct_val = self.predict(cur_val)
+        # init pci system
+        pcys = PCI(data,rounder = current_round, offset = offset)
 
-                self.__dsp.dr.soft_insert({"x":cur_val,"y":pdct_val},indx)
+        for value in values_range: # iterate throught values range
 
+            print(f"\t current value: {value}")
 
-            cur_val += step
-            indx += 1
-            cur_val = round(cur_val, norm_round)
+            # aproximate values
+            current_values.append(pcys.predict(value))
 
-        print(self.__dsp.dr.extract_df(0,self.__dsp.dr.rows_count()))
-        print(f"------{self.__dsp.dr.rows_count()}")
+        # vectorize values and save it
+        aprox_values[current_round] = array(current_values)
 
+        # clear current values
+        current_values.clear()
+
+        del pcys # delete pci system
+
+    return aprox_values # return aproximate values
 
 def relative_error(real_val,aprox_val):
     '''
@@ -487,26 +549,84 @@ def relative_error(real_val,aprox_val):
     '''
     return 100*abs((real_val-aprox_val)/real_val)
 
-def uniform_data_range(df: dfop.DataFrame, function, offset_range : list, rounder_range : list):
-    '''
+def compare(data, real_function,values_range, offset, rounder):
+
+    # sp: ------------- Vars -------------
+
+    # variables to set pci evaluate function
+    offset_iter, rounder_iter = True, True
+    # pci evaluate function
+    pci_func = None
+    # real function values
+    real_values = list()
+    # aproximate pci values
+    aprox_values = list()
+    # relative error
+    error = 0
+    # errors dictionary
+    error_dict = dict()
+
+    # sp: ------------- Check iterables -------------
+
+    try:# check if offset is iterable
+        iter(offset)
+    except TypeError:# save it
+        offset_iter = False
+
+    try:# chacj if rounder is iterable
+        iter(rounder) 
+    except TypeError:# save it
+        rounder_iter = False
+
+    # Check whether offset or rounder is iterable because the 
+    # function only supports one of the two being iterable
+
+    # sp: ------------- Def pci function -------------
+
+    # if offset is iterable and rounder is not
+    if offset_iter and not rounder_iter:
+
+        # set pci evaluate function as pci offset variable
+        pci_func = pcit_ov
+
+    # if rounder is iterable and offset is not
+    elif rounder_iter and not offset_iter:
+
+        # set pci evaluate function as pci rounder variable
+        pci_func = pcit_rv
+    else:
+        raise Exception("Offset and rounder cant vary at the same time")
     
-    '''
+    # sp: ------------- Calculate values -------------
 
-    of,rn = meshgrid(offset_range,rounder_range)
+    # calculate aprox values
+    aprox_values = pci_func(data, offset,rounder,values_range)
 
-    of_rn = vstack(of,+rn)
+    #* Calculate real values
+    for value in values_range:
+        real_values.append(real_function(value))
 
-    of_rn = zip(of_rn[0],of_rn[1])
+    #sp: ------------- Calculate error -------------
 
-    
+    # vectorice lists
+    real_values =  array(real_values)
+
+    for key in aprox_values.keys():
+        error = relative_error(real_values,aprox_values[key])
+        error_dict[key] = error
+
+
+
+    return error_dict
+
 
 
 if __name__ == "__main__":
     
-    a = [1,2,3]   
-    b = ["a","b","c"]
-    c = ["?","#","$"]
-
-    print(list(zip(a,b,c)))
-
+    try:
+        iter(2)
+        print("iterable")
+    except TypeError:
+        print("no iterable")
+    
     pass
