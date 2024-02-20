@@ -644,7 +644,7 @@ class PTest:
         return rtn_df
 
     @staticmethod
-    def generate_data(function: callable, initial_value, final_value, step) -> dfop.DataFrame:
+    def generate_data(function: callable, initial_value, final_value, step, save_path="") -> dfop.DataFrame:
         """
 
         """
@@ -653,7 +653,14 @@ class PTest:
 
         rows = zip(inputs, outputs)
 
-        return dfop.DataFrame(rows, columns=["x", "y"])
+        rtn = dfop.DataFrame(rows, columns=["x", "y"])
+
+        if save_path == "":
+            return rtn
+        else:
+           rtn.to_csv(
+                f"{save_path}\\{function.__name__}_[{initial_value}-{final_value}]_{step}.csv"
+            )
 
 
 if __name__ == "__main__":
