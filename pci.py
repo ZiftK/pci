@@ -526,131 +526,134 @@ def relative_error(real_val, aprox_val):
     return 100 * abs((real_val - aprox_val) / real_val)
 
 
-@exec_time
-def uniform_data_range(
-        df: dfop.DataFrame,
-        function,
-        offset_range: list,
-        rounder_range: list,
-        show_progress=True,
-        force_train=False):
-    """
-    Generate predictions for all possible combinations using the
-    value ranges of 'offset' and 'rounder,' as well as intermediate values for each dataset.
+class PTest:
 
-    Params
-    ---------
-    df -> This is a DataFrame that will be used to make tests
+    @staticmethod
+    @exec_time
+    def uniform_data_range(
+            df: dfop.DataFrame,
+            function,
+            offset_range: list,
+            rounder_range: list,
+            show_progress=True,
+            force_train=False):
+        """
+        Generate predictions for all possible combinations using the
+        value ranges of 'offset' and 'rounder,' as well as intermediate values for each dataset.
 
-    function -> This parameter should be a function or an
-    executable that returns a real value for the 'x' input.
-    This real value will be compared with the approximate value
-    to calculate the approximation error.
+        Params
+        ---------
+        df -> This is a DataFrame that will be used to make tests
 
-    offset_range -> It is a list of values that represents all
-    offsets that will be used to train the PCI system for all approximations.
+        function -> This parameter should be a function or an
+        executable that returns a real value for the 'x' input.
+        This real value will be compared with the approximate value
+        to calculate the approximation error.
 
-    rounder_range -> It is a list of values that represents all-rounders that will be used to train the PCI system for all aproximations.
+        offset_range -> It is a list of values that represents all
+        offsets that will be used to train the PCI system for all approximations.
 
-    [optional] show_progress -> If set to True, print a loading bar that shows
-    the progress of the data approximations. If set to False, this loading bar is not shown
-    """
+        rounder_range -> It is a list of values that represents all-rounders that will be used to train the PCI system for all aproximations.
 
-    # If show_progress is True, import sys.stdout to
-    # show loading bar
-    from sys import stdout
+        [optional] show_progress -> If set to True, print a loading bar that shows
+        the progress of the data approximations. If set to False, this loading bar is not shown
+        """
 
-    # Initialize new DataFrame to return it
-    rtn_df = dfop.DataFrame()
+        # If show_progress is True, import sys.stdout to
+        # show loading bar
+        from sys import stdout
 
-    # Initialize a new list to store the
-    # values that will be used as inputs
-    # to make approximations with the PCI system
-    inputs = list()
+        # Initialize new DataFrame to return it
+        rtn_df = dfop.DataFrame()
 
-    # Extract the values from the 'x' 
-    # column of the DataFrame
-    x_vals = df["x"].to_list()
+        # Initialize a new list to store the
+        # values that will be used as inputs
+        # to make approximations with the PCI system
+        inputs = list()
 
-    # Get the count of input values
-    lenght = len(x_vals)
+        # Extract the values from the 'x'
+        # column of the DataFrame
+        x_vals = df["x"].to_list()
 
-    # The values with which the PCI system's ability
-    # to make predictions will be evaluated will not
-    # be the exact values in the 'x' column of the dataset.
-    # Instead, intermediate values will be used as it is
-    # estimated that these carry a greater margin of error.
-    # To create this set of evaluation inputs, all values from
-    # the 'x' column of the initial dataset will be considered,
-    # and the average of each contiguous set of values
-    # will be calculated
-    for i, x in enumerate(x_vals):
+        # Get the count of input values
+        lenght = len(x_vals)
 
-        # If index is out of index range from values list
-        if i + 1 >= lenght:
-            break  # break loop
+        # The values with which the PCI system's ability
+        # to make predictions will be evaluated will not
+        # be the exact values in the 'x' column of the dataset.
+        # Instead, intermediate values will be used as it is
+        # estimated that these carry a greater margin of error.
+        # To create this set of evaluation inputs, all values from
+        # the 'x' column of the initial dataset will be considered,
+        # and the average of each contiguous set of values
+        # will be calculated
+        for i, x in enumerate(x_vals):
 
-        inputs.append((x + x_vals[i + 1]) / 2)
+            # If index is out of index range from values list
+            if i + 1 >= lenght:
+                break  # break loop
 
-    # To avoid using three nested for loops, we use the Cartesian product
-    # to calculate all possible combinations for different values of 
-    # 'offset,' 'rounder,' and 'x'.
-    product = list(cart_pdct(offset_range, rounder_range, inputs))
+            inputs.append((x + x_vals[i + 1]) / 2)
 
-    # iteration count
-    iters = len(product)
+        # To avoid using three nested for loops, we use the Cartesian product
+        # to calculate all possible combinations for different values of
+        # 'offset,' 'rounder,' and 'x'.
+        product = list(cart_pdct(offset_range, rounder_range, inputs))
 
-    print(f"\n\nElements count {iters:,}...\n\n")
+        # iteration count
+        iters = len(product)
 
-    for i, element in enumerate(product):
-        # For each possible combination of (offset, rounder, x),
-        # we will generate a PCI approximation for the trio of values.
+        print(f"\n\nElements count {iters:,}...\n\n")
 
-        if show_progress:
-            # If the 'show_progress' variable was set
-            # to true, display a loading bar
+        for i, element in enumerate(product):
+            # For each possible combination of (offset, rounder, x),
+            # we will generate a PCI approximation for the trio of values.
 
-            cur = i / iters
-            bar = "=" * int(50 * cur)
-            spaces = " " * (50 - len(bar))
-            stdout.write(f"\r\tProcess: [{bar}{spaces}] {int(cur * 100)}% - {i:,} of {iters:,}")
-            stdout.flush()
+            if show_progress:
+                # If the 'show_progress' variable was set
+                # to true, display a loading bar
 
-        # Get real val evaluating in real function
-        real_val = function(element[2])
-        # Get approximate value evaluating in PCI system
-        if not force_train:
-            aprox_val = PCI(df, offset=element[0], rounder=element[1]).predict(element[2])
-        else:
-            aprox_val = PCI(df, offset=element[0], rounder=element[1]).force_predict(element[2])
-        # Struct to data frame
-        rtn_df = rtn_df._append(
-            {
-                "offset": element[0],
-                "rounder": element[1],
-                "x": element[2],
-                "valor real": real_val,
-                "valor aproximado": aprox_val,
-                "error %": relative_error(real_val, aprox_val)
+                cur = i / iters
+                bar = "=" * int(50 * cur)
+                spaces = " " * (50 - len(bar))
+                stdout.write(f"\r\tProcess: [{bar}{spaces}] {int(cur * 100)}% - {i:,} of {iters:,}")
+                stdout.flush()
 
-            },
-            ignore_index=True
+            # Get real val evaluating in real function
+            real_val = function(element[2])
+            # Get approximate value evaluating in PCI system
+            if not force_train:
+                aprox_val = PCI(df, offset=element[0], rounder=element[1]).predict(element[2])
+            else:
+                aprox_val = PCI(df, offset=element[0], rounder=element[1]).force_predict(element[2])
+            # Struct to data frame
+            rtn_df = rtn_df._append(
+                {
+                    "offset": element[0],
+                    "rounder": element[1],
+                    "x": element[2],
+                    "valor real": real_val,
+                    "valor aproximado": aprox_val,
+                    "error %": relative_error(real_val, aprox_val)
 
-        )
+                },
+                ignore_index=True
 
-    return rtn_df
+            )
 
+        return rtn_df
 
-def generate_data(function, initial_value, final_value, step) -> dfop.DataFrame:
-    """
+    @staticmethod
+    def generate_data(function: callable, initial_value, final_value, step) -> dfop.DataFrame:
+        """
 
-    """
-    inputs = [x for x in arange(initial_value, final_value, step)]
-    outputs = [function(x) for x in inputs]
+        """
+        inputs = [x for x in arange(initial_value, final_value, step)]
+        outputs = [function(x) for x in inputs]
 
-    rows = zip(inputs, outputs)
+        rows = zip(inputs, outputs)
 
-    return dfop.DataFrame(rows, columns=["x", "y"])
+        return dfop.DataFrame(rows, columns=["x", "y"])
 
 
 if __name__ == "__main__":
