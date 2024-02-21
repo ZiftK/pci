@@ -375,7 +375,7 @@ class PCI:
         """
         solve_package.train(point, self.__offset, self.__rounder)
 
-    def force_predict(self, point, ep_step=0.5):
+    def force_predict(self, point):
         """
         Train PCI system around point using it as pivot, forcing re-training
         """
@@ -576,7 +576,7 @@ class PTest:
         x_vals = df["x"].to_list()
 
         # Get the count of input values
-        lenght = len(x_vals)
+        length = len(x_vals)
 
         # The values with which the PCI system's ability
         # to make predictions will be evaluated will not
@@ -590,7 +590,7 @@ class PTest:
         for i, x in enumerate(x_vals):
 
             # If index is out of index range from values list
-            if i + 1 >= lenght:
+            if i + 1 >= length:
                 break  # break loop
 
             inputs.append((x + x_vals[i + 1]) / 2)
@@ -623,9 +623,9 @@ class PTest:
             real_val = function(element[2])
             # Get approximate value evaluating in PCI system
             if not force_train:
-                aprox_val = PCI(df, offset=element[0], rounder=element[1]).predict(element[2])
+                approx_val = PCI(df, offset=element[0], rounder=element[1]).predict(element[2])
             else:
-                aprox_val = PCI(df, offset=element[0], rounder=element[1]).force_predict(element[2])
+                approx_val = PCI(df, offset=element[0], rounder=element[1]).force_predict(element[2])
             # Struct to data frame
             rtn_df = rtn_df._append(
                 {
@@ -633,8 +633,8 @@ class PTest:
                     "rounder": element[1],
                     "x": element[2],
                     "valor real": real_val,
-                    "valor aproximado": aprox_val,
-                    "error %": relative_error(real_val, aprox_val)
+                    "valor aproximado": approx_val,
+                    "error %": relative_error(real_val, approx_val)
 
                 },
                 ignore_index=True
@@ -644,7 +644,7 @@ class PTest:
         return rtn_df
 
     @staticmethod
-    def generate_data(function: callable, initial_value, final_value, step, save_path="") -> dfop.DataFrame:
+    def generate_data(function: callable, initial_value, final_value, step) -> dfop.DataFrame:
         """
 
         """
@@ -655,12 +655,61 @@ class PTest:
 
         rtn = dfop.DataFrame(rows, columns=["x", "y"])
 
-        if save_path == "":
-            return rtn
-        else:
-           rtn.to_csv(
-                f"{save_path}\\{function.__name__}_[{initial_value}-{final_value}]_{step}.csv"
-            )
+        return rtn
+
+    @staticmethod
+    def generate_test(
+            function: callable,
+            in_set_initial_value,
+            in_set_final_value,
+            in_set_step,
+            out_set_offset_range,
+            out_set_rounder_range,
+            force_train=False
+
+    ) -> dfop.DataFrame:
+        """
+
+        Params
+        ---------------
+
+        function ->
+
+        in_set_initial_value ->
+
+        in_set_final_value ->
+
+        in_set_steps ->
+
+        out_set_offset_range ->
+
+        out_set_rounder_range ->
+
+        force_train ->
+
+
+        """
+
+        in_save_path = f"data\\input_sets\\generate\\{function.__name__}_"\
+                       f"[{in_set_initial_value},{in_set_final_value}]_{in_set_step}.csv"
+
+        out_save_path = f"data\\output_sets\\generate\\{function.__name__}_"\
+                        f"[{in_set_initial_value},{in_set_final_value}]_{in_set_step}"\
+                        f"__o[{min(out_set_offset_range), max(out_set_offset_range)}]"\
+                        f"_r[{min(out_set_rounder_range), max(out_set_rounder_range)}].csv"
+
+        in_df = PTest.generate_data(function, in_set_initial_value, in_set_final_value, in_set_step)
+
+        out_df = PTest.uniform_data_range(
+            in_df,
+            function,
+            out_set_offset_range,
+            out_set_rounder_range,
+            force_train=force_train
+        )
+
+        in_df.to_csv(in_save_path)
+        out_df.to_csv(out_save_path)
 
 
 if __name__ == "__main__":
