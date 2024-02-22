@@ -311,9 +311,13 @@ class SolvePackage:
         """
         string = ""
 
+        if self.__coef is None:
+            return string
+
         for index, coef in enumerate(self.__coef):
             string += f"{self.__coef[index]}*x^{self.__exp[index]}"
             string += "" if index == len(self.__coef) - 1 else "+"
+
         return string.replace("e", "*10^")
 
 
@@ -421,7 +425,7 @@ class PCI:
             # train system inside static limits
             self.__train(point, self.__ssp)
 
-            # apply polinomial solution to static solve package
+            # apply polynomial solution to static solve package
             return self.__ssp.apply_pol(point)
 
         # It has been previously verified that the point to approximate 
@@ -621,21 +625,25 @@ class PTest:
 
             # Get real val evaluating in real function
             real_val = function(element[2])
+
             # Get approximate value evaluating in PCI system
+            psys = PCI(df, offset=element[0], rounder=element[1])
             if not force_train:
-                approx_val = PCI(df, offset=element[0], rounder=element[1]).predict(element[2])
+                approx_val = psys.predict(element[2])
             else:
-                approx_val = PCI(df, offset=element[0], rounder=element[1]).force_predict(element[2])
+                approx_val = psys.force_predict(element[2])
             # Struct to data frame
             rtn_df = rtn_df._append(
                 {
                     "offset": element[0],
                     "rounder": element[1],
                     "x": element[2],
-                    "valor real": real_val,
-                    "valor aproximado": approx_val,
-                    "error %": relative_error(real_val, approx_val)
-
+                    "Real value": real_val,
+                    "Approx value": approx_val,
+                    "Error %": relative_error(real_val, approx_val),
+                    "Dynamic function": str(psys.dynamic_sp),
+                    "Static function": f"\"{str(psys.static_sp)}\"",
+                    "Force train in predict": force_train
                 },
                 ignore_index=True
 
@@ -690,12 +698,12 @@ class PTest:
 
         """
 
-        in_save_path = f"data\\input_sets\\generate\\{function.__name__}_"\
+        in_save_path = f"data\\input_sets\\generate\\{function.__name__}_" \
                        f"[{in_set_initial_value},{in_set_final_value}]_{in_set_step}.csv"
 
-        out_save_path = f"data\\output_sets\\generate\\{function.__name__}_"\
-                        f"[{in_set_initial_value},{in_set_final_value}]_{in_set_step}"\
-                        f"__o[{min(out_set_offset_range), max(out_set_offset_range)}]"\
+        out_save_path = f"data\\output_sets\\generate\\{function.__name__}_" \
+                        f"[{in_set_initial_value},{in_set_final_value}]_{in_set_step}" \
+                        f"__o[{min(out_set_offset_range), max(out_set_offset_range)}]" \
                         f"_r[{min(out_set_rounder_range), max(out_set_rounder_range)}].csv"
 
         in_df = PTest.generate_data(function, in_set_initial_value, in_set_final_value, in_set_step)
