@@ -1,18 +1,19 @@
-'''
+"""
 
-'''
+"""
 # import numpy array
 from numpy import array
 from numpy import arange
 
 import time
 
-def exec_time(func):
-    '''
-    Print the execution time of function passed as a parameter
-    '''
-    def wrapper(*args, **kwargs):
 
+def exec_time(func):
+    """
+    Print the execution time of function passed as a parameter
+    """
+
+    def wrapper(*args, **kwargs):
         # The pre-execution time is obtained using the system clock
         intl = time.time()
         # The return value of the function to be evaluated is stored
@@ -23,8 +24,8 @@ def exec_time(func):
         tt = fnl - intl
         # Show message
         print(f"\n\nThe function {func.__name__} was executed in {tt:.6f} seconds.")
-        # Return return value
+        # Return value
         return rtn
+
     # Return value
     return wrapper
-

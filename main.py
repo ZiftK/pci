@@ -1,19 +1,44 @@
 import pci as pci
 import pandas as pd
-from numpy import sin 
+from numpy import sin
 
-pd.set_option("display.max_rows",None)
+# import matplotlib.pyplot as plt
+
+pd.set_option("display.max_rows", None)
 
 
-psys = pci.PCI("csvs/sin.csv",offset=1,rounder=1)
+def x2(x): return x ** 2
 
-print(psys.predict(10))
-print(psys.static_sp)
+#
+# pci.PTest.generate_test(
+#     function=x2,
+#     in_set_initial_value=100,
+#     in_set_final_value=200,
+#     in_set_step=2,
+#     out_set_offset_range=[o for o in range(1, 10)],
+#     out_set_rounder_range=[r for r in range(5, 15)],
+#     force_train=True
+# )
 
-# df = pd.read_csv("csvs\sin.csv")
+# a = pci.PTest.uniform_data_range(
+#     pd.read_csv("data\\input_sets\\generate\\x2_[1-10]_2.csv"),
+#     x2,
+#     [o for o in range(1, 6)],
+#     [r for r in range(10, 15)],
+#     force_train=True
+# )
 
-# new_df = pci.uniform_data_range(df,sin,[x for x in range(1,20)],[y for y in range(1,50)],force_train=True)
 
-# new_df.to_csv("prueba-sin-1_75-0_5-sin_csv.csv",index = False)
+# if __name__ == "__main__":
+#
+#     lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+#
+#     for i, val in enumerate(lst):
+#
+#         print(i)
+#         print(val)
+#
+#
+#     pass
 
-# df = pd.read_csv("gdf1_geo.csv")
+df = pd.read_csv("gdf1_geo.csv")
