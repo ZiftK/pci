@@ -726,7 +726,14 @@ class PTest:
     @staticmethod
     def plot_val_input_vs_error(df: dfop.DataFrame, **kwargs):
         """
+        This function plots the output set using the 'x'
+        test value as the index and the percentage error as their relation.
 
+        df -> PCI output set (Pandas DataFrame)
+
+        up_ticks -> ticks of up axis
+
+        up_labels -> labels of up axis
         """
 
         # get 'x' and 'Error' column
@@ -763,7 +770,7 @@ class PTest:
             ax_2.set_xticklabels(kwargs.get("up_labels",[]))
 
             for xin in kwargs.get("up_ticks"):
-                plt.plot([xin, xin],[0, max_error], linestyle=':')
+                plt.plot([xin, xin], [0, max_error], linestyle=':')
 
         plt.show()
         pass
