@@ -771,8 +771,12 @@ class PTest:
             ax_2.set_xticks(kwargs.get("up_ticks"))
             ax_2.set_xticklabels(kwargs.get("up_labels", []))
 
+            # remove unused kwargs
+            kwargs.pop("up_ticks")
+            kwargs.pop("up_labels")
+
             for xin in kwargs.get("up_ticks"):
-                plt.plot([xin, xin], [0, max_error], linestyle=':')
+                plt.plot([xin, xin], [0, max_error], **kwargs)
 
         if kwargs.get("auto_upx", None) is not None:
 
@@ -806,6 +810,7 @@ class PTest:
             ax_2.set_xticks(x_val)
             ax_2.set_xticklabels(x_val)
 
+            # Remove auto_upx to
             kwargs.pop("auto_upx")
 
             # Draw sign lines
