@@ -10,6 +10,9 @@ import mathematics.aop as aop
 import mathematics.dfop as dfop
 
 from numpy import array, matrix, linalg, round, delete, arange
+
+from matplotlib import pyplot as plt
+
 from itertools import product as cart_pdct
 from testing.testing import exec_time
 
@@ -719,6 +722,51 @@ class PTest:
 
         in_df.to_csv(in_save_path)
         out_df.to_csv(out_save_path)
+
+    @staticmethod
+    def plot_val_input_vs_error(df: dfop.DataFrame, **kwargs):
+        """
+
+        """
+
+        # get 'x' and 'Error' column
+        df = df[["x", "Error %"]]
+
+        # To graph this DataFrame, we need to set the 'x'
+        # column as the index. Then, the DataFrame will
+        # be graphed as 'x' versus 'Error'.
+        df = df.set_index("x")
+
+        #
+        # We need to calculate the maximum error because
+        # this value represents the top of the plot,
+        # and the lines indicating the sign must go from bottom to top
+        max_error = df["Error %"].max()
+
+        # Sub plots to new axis
+        fig, ax = plt.subplots()
+
+        # Main plot
+        ax.plot(df)
+
+        # Add grid to plot
+        plt.grid()
+
+        # If 'up_ticks' is not None, this list
+        # of values will be plotted as vertical lines
+        if kwargs.get("up_ticks") is not None:
+            # create new axis
+            ax_2 = ax.twiny()
+            ax_2.xaxis.set_ticks_position('top')
+
+            ax_2.set_xticks(kwargs.get("up_ticks"))
+            ax_2.set_xticklabels(kwargs.get("up_labels",[]))
+
+            for xin in kwargs.get("up_ticks"):
+                plt.plot([xin, xin],[0, max_error], linestyle=':')
+
+        plt.show()
+        pass
 
 
 if __name__ == "__main__":
