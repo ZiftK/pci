@@ -4,6 +4,7 @@ Created on Mon Oct 23 17:14:46 2023
 
 @author: ZiftK
 """
+import pandas as pd
 
 import mathematics.aop as aop
 import mathematics.dfop as dfop
@@ -523,14 +524,14 @@ class PCI:
         return self.__dsp
 
 
-def relative_error(real_val, aprox_val):
-    """
-    Calculate relative error from real value and his aproximate value
-    """
-    return 100 * abs((real_val - aprox_val) / real_val)
-
-
 class PTest:
+
+    @staticmethod
+    def relative_error(real_val, aprox_val):
+        """
+        Calculate relative error from real value and his aproximate value
+        """
+        return 100 * abs((real_val - aprox_val) / real_val)
 
     @staticmethod
     @exec_time
@@ -640,7 +641,7 @@ class PTest:
                     "x": element[2],
                     "Real value": real_val,
                     "Approx value": approx_val,
-                    "Error %": relative_error(real_val, approx_val),
+                    "Error %": PTest.relative_error(real_val, approx_val),
                     "Dynamic function": str(psys.dynamic_sp),
                     "Static function": f"\"{str(psys.static_sp)}\"",
                     "Force train in predict": force_train
@@ -721,4 +722,6 @@ class PTest:
 
 
 if __name__ == "__main__":
+
+
     pass
