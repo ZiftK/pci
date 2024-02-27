@@ -734,6 +734,8 @@ class PTest:
         up_ticks -> ticks of up axis
 
         up_labels -> labels of up axis
+
+        auto_upx -> number of maximum points indicated
         """
 
         # get 'x' and 'Error' column
@@ -750,7 +752,7 @@ class PTest:
         # and the lines indicating the sign must go from bottom to top
         max_error = df["Error %"].max()
 
-        # Sub plots to new axis
+        # Sub-plots to new axis
         fig, ax = plt.subplots()
 
         # Main plot
@@ -767,16 +769,52 @@ class PTest:
             ax_2.xaxis.set_ticks_position('top')
 
             ax_2.set_xticks(kwargs.get("up_ticks"))
-            ax_2.set_xticklabels(kwargs.get("up_labels",[]))
+            ax_2.set_xticklabels(kwargs.get("up_labels", []))
 
             for xin in kwargs.get("up_ticks"):
                 plt.plot([xin, xin], [0, max_error], linestyle=':')
+
+        if kwargs.get("auto_upx", None) is not None:
+
+            # Get error values
+            error = [x for x in df["Error %"].values]
+            # Get x values
+            x_s = [index for index in df.index.values]
+
+            # Pair error and x values
+            sort_vals = list(zip(x_s, error))
+
+            # Sort the paired list from maximum error to minimum error
+            sort_vals.sort(key=lambda x: x[1], reverse=True)
+
+            # We separate the sorted x values with respect to the error
+            x_val = [index[0] for index in sort_vals]
+
+            # Select the specified signs count
+            x_val = x_val[:kwargs.get("auto_upx")]
+
+            # create new axis
+            ax_2 = ax.twiny()
+            ax_2.xaxis.set_ticks_position('top')
+
+            # Set the x limits of up axis to the limits of
+            # the bottom axis
+            ax_2.set_xlim(ax.get_xlim())
+
+            # Set ticks of up axis to the 'x' values
+            # with the maximum error, and their labels to
+            ax_2.set_xticks(x_val)
+            ax_2.set_xticklabels(x_val)
+
+            kwargs.pop("auto_upx")
+
+            # Draw sign lines
+            for v in x_val:
+                plt.plot([v, v], [0, max_error], **kwargs)
 
         plt.show()
         pass
 
 
 if __name__ == "__main__":
-
-
     pass
