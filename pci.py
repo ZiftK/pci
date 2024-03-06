@@ -4,11 +4,15 @@ Created on Mon Oct 23 17:14:46 2023
 
 @author: ZiftK
 """
+import pandas as pd
 
 import mathematics.aop as aop
 import mathematics.dfop as dfop
 
 from numpy import array, matrix, linalg, round, delete, arange
+
+from matplotlib import pyplot as plt
+
 from itertools import product as cart_pdct
 from testing.testing import exec_time
 
@@ -523,14 +527,14 @@ class PCI:
         return self.__dsp
 
 
-def relative_error(real_val, aprox_val):
-    """
-    Calculate relative error from real value and his aproximate value
-    """
-    return 100 * abs((real_val - aprox_val) / real_val)
-
-
 class PTest:
+
+    @staticmethod
+    def relative_error(real_val, aprox_val):
+        """
+        Calculate relative error from real value and his aproximate value
+        """
+        return 100 * abs((real_val - aprox_val) / real_val)
 
     @staticmethod
     @exec_time
@@ -640,7 +644,7 @@ class PTest:
                     "x": element[2],
                     "Real value": real_val,
                     "Approx value": approx_val,
-                    "Error %": relative_error(real_val, approx_val),
+                    "Error %": PTest.relative_error(real_val, approx_val),
                     "Dynamic function": str(psys.dynamic_sp),
                     "Static function": f"\"{str(psys.static_sp)}\"",
                     "Force train in predict": force_train
@@ -718,6 +722,103 @@ class PTest:
 
         in_df.to_csv(in_save_path)
         out_df.to_csv(out_save_path)
+
+    @staticmethod
+    def plot_val_input_vs_error(df: dfop.DataFrame, **kwargs):
+        """
+        This function plots the output set using the 'x'
+        test value as the index and the percentage error as their relation.
+
+        df -> PCI output set (Pandas DataFrame)
+
+        up_ticks -> ticks of up axis
+
+        up_labels -> labels of up axis
+
+        auto_upx -> number of maximum points indicated
+        """
+
+        # get 'x' and 'Error' column
+        df = df[["x", "Error %"]]
+
+        # To graph this DataFrame, we need to set the 'x'
+        # column as the index. Then, the DataFrame will
+        # be graphed as 'x' versus 'Error'.
+        df = df.set_index("x")
+
+        #
+        # We need to calculate the maximum error because
+        # this value represents the top of the plot,
+        # and the lines indicating the sign must go from bottom to top
+        max_error = df["Error %"].max()
+
+        # Sub-plots to new axis
+        fig, ax = plt.subplots()
+
+        # Main plot
+        ax.plot(df)
+
+        # Add grid to plot
+        plt.grid()
+
+        # If 'up_ticks' is not None, this list
+        # of values will be plotted as vertical lines
+        if kwargs.get("up_ticks") is not None:
+            # create new axis
+            ax_2 = ax.twiny()
+            ax_2.xaxis.set_ticks_position('top')
+
+            ax_2.set_xticks(kwargs.get("up_ticks"))
+            ax_2.set_xticklabels(kwargs.get("up_labels", []))
+
+            # remove unused kwargs
+            kwargs.pop("up_ticks")
+            kwargs.pop("up_labels")
+
+            for xin in kwargs.get("up_ticks"):
+                plt.plot([xin, xin], [0, max_error], **kwargs)
+
+        if kwargs.get("auto_upx", None) is not None:
+
+            # Get error values
+            error = [x for x in df["Error %"].values]
+            # Get x values
+            x_s = [index for index in df.index.values]
+
+            # Pair error and x values
+            sort_vals = list(zip(x_s, error))
+
+            # Sort the paired list from maximum error to minimum error
+            sort_vals.sort(key=lambda x: x[1], reverse=True)
+
+            # We separate the sorted x values with respect to the error
+            x_val = [index[0] for index in sort_vals]
+
+            # Select the specified signs count
+            x_val = x_val[:kwargs.get("auto_upx")]
+
+            # create new axis
+            ax_2 = ax.twiny()
+            ax_2.xaxis.set_ticks_position('top')
+
+            # Set the x limits of up axis to the limits of
+            # the bottom axis
+            ax_2.set_xlim(ax.get_xlim())
+
+            # Set ticks of up axis to the 'x' values
+            # with the maximum error, and their labels to
+            ax_2.set_xticks(x_val)
+            ax_2.set_xticklabels(x_val)
+
+            # Remove auto_upx to
+            kwargs.pop("auto_upx")
+
+            # Draw sign lines
+            for v in x_val:
+                plt.plot([v, v], [0, max_error], **kwargs)
+
+        plt.show()
+        pass
 
 
 if __name__ == "__main__":
