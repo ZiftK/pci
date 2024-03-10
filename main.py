@@ -9,36 +9,37 @@ pd.set_option("display.max_rows", None)
 
 def x2(x): return x ** 2
 
-#
+
 # pci.PTest.generate_test(
-#     function=x2,
-#     in_set_initial_value=100,
-#     in_set_final_value=200,
-#     in_set_step=2,
-#     out_set_offset_range=[o for o in range(1, 10)],
-#     out_set_rounder_range=[r for r in range(5, 15)],
+#     function=sin,
+#     in_set_initial_value=-100,
+#     in_set_final_value=100,
+#     in_set_step=0.5,
+#     out_set_offset_range=[o for o in range(1, 15)],
+#     out_set_rounder_range=[r for r in range(5, 30)],
 #     force_train=True
 # )
 
-# a = pci.PTest.uniform_data_range(
-#     pd.read_csv("data\\input_sets\\generate\\x2_[1-10]_2.csv"),
-#     x2,
-#     [o for o in range(1, 6)],
-#     [r for r in range(10, 15)],
-#     force_train=True
-# )
+if __name__ == "__main__":
+    # df = pd.read_csv("data\\output_sets\\generate\\sin_[-100,100]_0.5__o[(1, 14)]_r[(5, 29)].csv")
+    # groups = dfop.split_by(df, ["offset", "rounder"])
+    #
+    # pci.PTest.plot_val_input_vs_error(groups[0], auto_upx=10, linestyle=":")
 
+    # pci.PTest.generate_test(
+    #     np.cos,
+    #     -100,
+    #     100,
+    #     0.5,
+    #     [o for o in range(1, 15)],
+    #     [r for r in range(5, 30)],
+    #     force_train=True
+    #
+    # )
 
-# if __name__ == "__main__":
-#
-#     lst = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-#
-#     for i, val in enumerate(lst):
-#
-#         print(i)
-#         print(val)
-#
-#
-#     pass
+    df = pd.read_csv("data\\output_sets\\generate\\cos_[-100,100]_0.5__o[(1, 14)]_r[(5, 29)].csv")
+    groups = dfop.split_by(df, ["offset", "rounder"])
 
-df = pd.read_csv("gdf1_geo.csv")
+    for udf in groups:
+        pci.PTest.plot_val_input_vs_error(udf, auto_upx=5, linestyle=":")
+    pass
