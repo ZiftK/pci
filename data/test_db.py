@@ -3,6 +3,8 @@ from rich import print as rprint
 
 from enum import Enum
 
+import os
+
 
 class DNodeTypes(Enum):
     FUNCTION = 0
@@ -14,16 +16,15 @@ class DNodeTypes(Enum):
 
 class DNode(Tree):
 
-    def __init__(self, name: str, type: DNodeTypes, *args, **kwargs) -> None:
+    def __init__(self, name: str, dtype: DNodeTypes, *args, **kwargs) -> None:
         super().__init__(name, *args, **kwargs)
 
-        self.__path: str = kwargs.get('path', "")
-        self.__type = DNodeTypes(type)
+        self.__type = DNodeTypes(dtype)
         self.__build_params: dict = kwargs.get('build_params', dict())
 
     def __str__(self):
 
-        return f"Type: {self.__type.name}\n Path: {self.__path}\n Build: {self.__build_params}"
+        return f"Type: {self.__type.name}\n Build: {self.__build_params}"
 
 
 class DataCenter:
@@ -34,7 +35,7 @@ class DataCenter:
 
 if __name__ == '__main__':
 
-    a = DNode(name="A", type=DNodeTypes.FUNCTION)
+    a = DNode(name="A", dtype=DNodeTypes.FUNCTION)
     rprint(a)
     print(a)
 
