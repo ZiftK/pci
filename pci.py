@@ -4,7 +4,6 @@ Created on Mon Oct 23 17:14:46 2023
 
 @author: ZiftK
 """
-import pandas as pd
 
 import mathematics.aop as aop
 import mathematics.dfop as dfop
@@ -51,7 +50,7 @@ class SolvePackage:
         self.__ue = None  # effective upper limit
 
         # coeficients to save data range solution
-        self.__coef = None
+        self.__coefficients = None
         # exponentes to save data range solution
         self.__exp = None
 
@@ -171,10 +170,10 @@ class SolvePackage:
 
         # Solve the matrix using the 'y' column of the effective data frame
         # as the expansion vector of the matrix
-        self.__coef = linalg.solve(m, array(self.extract_ef_df()["y"]))
+        self.__coefficients = linalg.solve(m, array(self.extract_ef_df()["y"]))
 
         # Round each polynomial coefficient using the rounder value
-        self.__coef = round(self.__coef, rounder)
+        self.__coefficients = round(self.__coefficients, rounder)
 
     def __clear(self):
         """
@@ -188,14 +187,14 @@ class SolvePackage:
         # get index of negligible coeficients
         # iterate throught each round coeficient and get its index
         # for delete to polynomial
-        for index, coef in enumerate(self.__coef):
+        for index, coef in enumerate(self.__coefficients):
 
             # add index with negligible coeficients
             if coef == 0:
                 del_index.append(index)
 
         # This is done to generate polynomials as small as possible or to reduce noise
-        self.__coef = delete(self.__coef, del_index)
+        self.__coefficients = delete(self.__coefficients, del_index)
         self.__exp = delete(self.__exp, del_index)
 
     def update_out_data(self, point, step=0.5):
@@ -281,7 +280,7 @@ class SolvePackage:
         a = aop.valpow(float(point), self.__exp)
         # multiply each value in solve point exponents 
         # to each value in solve coefficients
-        pdct = aop.amult(self.__coef, a)
+        pdct = aop.amult(self.__coefficients, a)
         # return sum of array
         return sum(pdct)
 
@@ -301,7 +300,7 @@ class SolvePackage:
 
     @property
     def coef(self):
-        return self.__coef
+        return self.__coefficients
 
     @property
     def exp(self):
@@ -315,12 +314,12 @@ class SolvePackage:
         """
         string = ""
 
-        if self.__coef is None:
+        if self.__coefficients is None:
             return string
 
-        for index, coef in enumerate(self.__coef):
-            string += f"{self.__coef[index]}*x^{self.__exp[index]}"
-            string += "" if index == len(self.__coef) - 1 else "+"
+        for index, coef in enumerate(self.__coefficients):
+            string += f"{self.__coefficients[index]}*x^{self.__exp[index]}"
+            string += "" if index == len(self.__coefficients) - 1 else "+"
 
         return string.replace("e", "*10^")
 
@@ -778,6 +777,9 @@ class PTest:
             for xin in kwargs.get("up_ticks"):
                 plt.plot([xin, xin], [0, max_error], **kwargs)
 
+        # If "auto_upx" is set to int greater than 1,
+        # plot aux lines on the 'x' values that maximum
+        # error.
         if kwargs.get("auto_upx", None) is not None:
 
             # Get error values
@@ -819,6 +821,31 @@ class PTest:
 
         plt.show()
         pass
+
+
+class GEnP:
+
+    def __init__(self, df, **kwargs):
+
+        # Output data frame
+        self.__df: dfop.DataFrame
+
+        # Groups of data frames
+        self.__groups: list = []
+
+        if type(df) == str:
+            self.__df = dfop.read_csv(df)
+        if type(df) == dfop.DataFrame:
+            self.__df = df
+
+    def split(self, *keys):
+
+        # Group by keys
+        grouped = self.__df.groupby(*keys)
+
+        # Convert each group into data frame
+        self.__groups = [group for _, group in grouped]
+
 
 
 if __name__ == "__main__":
