@@ -8,7 +8,7 @@ from collections import deque
 import os
 
 
-def queue_to_tree(lst: list, tree_type: type(Tree) = Tree) -> Tree:
+def queue_to_tree(lst: list) -> Tree:
     """
     Transform a list of values into a tree graph
     """
@@ -20,7 +20,7 @@ def queue_to_tree(lst: list, tree_type: type(Tree) = Tree) -> Tree:
     queue = deque(lst)
 
     # init root path
-    root = tree_type(queue.popleft())
+    root = DNode(queue.popleft())
     queue.popleft()
 
     # initialize dummy as root
@@ -84,10 +84,10 @@ class DNodeTypes(Enum):
 
 class DNode(Tree):
 
-    def __init__(self, name: str, dtype: DNodeTypes, *args, **kwargs) -> None:
+    def __init__(self, name: str, *args, **kwargs) -> None:
         super().__init__(name, *args, **kwargs)
 
-        self.__type = DNodeTypes(dtype)
+        self.__type: DNodeTypes = None
         self.__build_params: dict = kwargs.get('build_params', dict())
 
     def __str__(self):
@@ -109,16 +109,33 @@ class DataCenter:
         rprint(self.__tree)
 
     def __load_nodes(self) -> Tree:
+        """
+        Traverse the folder tree of the current path and transform it into an N-Tree.
+        """
+
+        # adjacent list to convert into tree
         lst = []
+
+        # queue to save tree levels
         queue = deque()
+
+        # add current path
         queue.append(self.__path)
 
+        # if the paths queue is not empty
         while len(queue) > 0:
+
+            # set current path as first item of paths queue
             path = queue.popleft()
+
+            # list of directories in current path
             add_list = [dr.name for dr in os.scandir(path) if dr.is_dir()]
+            # add None element to switch tree level
             lst += add_list + [None]
+            # add level to paths queue
             queue += deque([path + f"{dr_name}/" for dr_name in add_list])
 
+        # return tree
         return queue_to_tree(lst)
 
 
