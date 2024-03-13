@@ -12,14 +12,20 @@ def queue_to_tree(lst: list, tree_type: type(Tree) = Tree) -> Tree:
     """
     Transform a list of values into a tree graph
     """
+
+    if lst[1]:
+        raise Exception("The list not represents a valid tree")
+
+    # transform list to queue struct
+    queue = deque(lst)
+
     # init root path
-    root = tree_type("root")
+    root = tree_type(queue.popleft())
+    queue.popleft()
 
     # initialize dummy as root
     dummy = root
 
-    # transform list to queue struct
-    queue = deque(lst)
     # initialize node queue
     node_queue = deque()
 
@@ -98,21 +104,25 @@ class DataCenter:
         # root path
         self.__path = kwargs.get('path', "./")
         # create NTree from directories
-        self.__load_nodes()
+        self.__tree = self.__load_nodes()
 
-    def __load_nodes(self) -> None:
-        pass
+        rprint(self.__tree)
+
+    def __load_nodes(self) -> Tree:
+        lst = []
+        queue = deque()
+        queue.append(self.__path)
+
+        while len(queue) > 0:
+            path = queue.popleft()
+            add_list = [dr.name for dr in os.scandir(path) if dr.is_dir()]
+            lst += add_list + [None]
+            queue += deque([path + f"{dr_name}/" for dr_name in add_list])
+
+        return queue_to_tree(lst)
 
 
 if __name__ == '__main__':
-    tree_list = [
-        "a", "b", "c", None,
-        "a1", "a2", None,
-        None,
-        "c1", "c2", None,
-        None,
-        None,
-        "c1.1"
-    ]
+    DataCenter()
 
     pass
