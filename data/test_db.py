@@ -8,12 +8,12 @@ from collections import deque
 import os
 
 
-def queue_to_tree(lst: list) -> Tree:
+def queue_to_tree(lst: list, tree_type: type(Tree) = Tree) -> Tree:
     """
     Transform a list of values into a tree graph
     """
     # init root path
-    root = Tree("root")
+    root = tree_type("root")
 
     # initialize dummy as root
     dummy = root
@@ -91,22 +91,16 @@ class DNode(Tree):
 class DataCenter:
 
     def __init__(self, *args, **kwargs) -> None:
+        """
+        Facade for managing test data for PCI
+        """
+
+        # root path
         self.__path = kwargs.get('path', "./")
+        # create NTree from directories
         self.__load_nodes()
 
     def __load_nodes(self) -> None:
-        # create root node
-        root = DNode("root")
-        self.__path += "root/"
-
-        # scan directory
-        content = os.scandir(self.__path)
-
-        values = deque()
-
-        while content:
-            values.append([dr.name for dr in content if dr.is_dir()])
-
         pass
 
 
