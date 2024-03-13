@@ -16,6 +16,35 @@ from itertools import product as cart_pdct
 from testing.testing import exec_time
 
 
+from numpy import array
+from numpy import arange
+
+import time
+
+
+def exec_time(func):
+    """
+    Print the execution time of function passed as a parameter
+    """
+
+    def wrapper(*args, **kwargs):
+        # The pre-execution time is obtained using the system clock
+        intl = time.time()
+        # The return value of the function to be evaluated is stored
+        rtn = func(*args, **kwargs)
+        # The post-execution time is obtained using the system clock
+        fnl = time.time()
+        # The execution time is calculated
+        tt = fnl - intl
+        # Show message
+        print(f"\n\nThe function {func.__name__} was executed in {tt:.6f} seconds.")
+        # Return value
+        return rtn
+
+    # Return value
+    return wrapper
+
+
 class SolvePackage:
     """
     The Resolution Package is a class designed to encapsulate a range of
@@ -49,7 +78,7 @@ class SolvePackage:
         self.__le = None  # effective lower limit
         self.__ue = None  # effective upper limit
 
-        # coeficients to save data range solution
+        # coefficients to save data range solution
         self.__coefficients = None
         # exponentes to save data range solution
         self.__exp = None
@@ -431,10 +460,10 @@ class PCI:
             # apply polinomial solution to static solve package
             return self.__ssp.apply_pol(point)
 
-        # It has been previously verified that the point to approximate 
-        # is outside the dynamic effective range and the 
-        # static effective range. It has also been confirmed to be 
-        # outside the static range, so the only available options are 
+        # It has been previously verified that the point to approximate
+        # is outside the dynamic effective range and the
+        # static effective range. It has also been confirmed to be
+        # outside the static range, so the only available options are
         # that it is within the dynamic range or it is outside all ranges.
 
         # check if point is inside dynamic range
