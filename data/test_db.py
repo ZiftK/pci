@@ -25,13 +25,13 @@ class DNodeTypes(Enum):
     @staticmethod
     def csv_types():
         return [
-                DNodeTypes.INPUT_SET,
-                DNodeTypes.OUTPUT_SET,
-                DNodeTypes.ANALYZE_SET
+            DNodeTypes.INPUT_SET,
+            DNodeTypes.OUTPUT_SET,
+            DNodeTypes.ANALYZE_SET
         ]
 
     @staticmethod
-    def image_types(self):
+    def image_types():
         return [
             DNodeTypes.PLOT
         ]
@@ -123,7 +123,6 @@ class DNode:
         self.__build_params = value if value != "" else "NA"
 
     def __str__(self):
-
         build_params = self.build_params.replace("\n", "\n\t")
         build_params = build_params.replace("=", " = ")
         return ("\n"
@@ -206,7 +205,8 @@ def queue_to_tree(lst: list) -> tuple[Tree, DNode]:
         r_node_queue.append(r_child)
         d_node_queue.append(d_child)
 
-        r_dummy.add(r_child)
+        r_dummy.children.append(r_child)
+
         d_dummy.add(d_child)
 
     return r_root, d_root
@@ -223,12 +223,13 @@ class DataCenter:
 
         # root path
         self.__path = kwargs.get('path', "./")
+        self.__p_splitter = kwargs.get('path_splitter', ".")
         # create NTree from directories
         self.__r_tree, self.__d_tree = self.__load_nodes()
         self.__load_content()
 
-        rprint(self.__r_tree)
-        print(self.__d_tree.children[0].children[0].children[0], self.__d_tree.children[1])
+        self.__d_dummy = self.__d_tree
+        self.__r_dummy = self.__r_tree
 
     def __load_nodes(self) -> tuple[Tree, DNode]:
         """
@@ -287,15 +288,50 @@ class DataCenter:
                 dummy.value = read_csv(f"{dummy.path}/content")
 
             # if node is an image node type and has a content, load image
-            elif dummy.node_type in DNodeTypes.image_types and "content.png" in content:
+            elif dummy.node_type in DNodeTypes.image_types() and "content.png" in content:
                 dummy.value = Image.open(f"{self.__path}/content.png")
 
             # add dummy children to queue
             queue += deque(dummy.children)
 
+    def __search_by_path(self, path: str):
+
+        # split path using class splitter
+        path = path.split(self.__p_splitter)
+
+        # set reach Tree and DNode tree heads
+        d_dummy = self.__d_tree
+        r_dummy = self.__r_tree
+
+        # iterate through split path
+        for dr in path:
+
+            # search directory in DNode children
+            n_d_dummy = next((node for node in d_dummy.children if node.dir_name == dr), None)
+
+            # if not exists child with specified name, rais exception
+            if not n_d_dummy:
+                raise Exception("No such directory")
+
+            # set rich dummy to child with match index
+            r_dummy = r_dummy.children[d_dummy.children.index(n_d_dummy)]
+            # set data dummy to child with match index
+            d_dummy = n_d_dummy
+
+        return r_dummy, d_dummy  # return dummy's tuple
+
+    def cd(self, path):
+
+        self.__r_dummy, self.__d_dummy = self.__search_by_path(path)
+
+    def show(self):
+        rprint(self.__r_dummy)
+        print(self.__d_dummy)
+
 
 if __name__ == '__main__':
-    DataCenter()
-
+    a = DataCenter()
+    a.cd("f_tanx")
+    a.show()
 
     pass
