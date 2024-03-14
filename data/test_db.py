@@ -7,6 +7,10 @@ from enum import Enum
 
 from collections import deque
 
+from pandas import DataFrame, read_csv
+
+from PIL import Image
+
 import os
 
 
@@ -17,6 +21,20 @@ class DNodeTypes(Enum):
     OUTPUT_SET = "os"
     ANALYZE_SET = "as"
     PLOT = "p"
+
+    @staticmethod
+    def csv_types():
+        return [
+                DNodeTypes.INPUT_SET,
+                DNodeTypes.OUTPUT_SET,
+                DNodeTypes.ANALYZE_SET
+        ]
+
+    @staticmethod
+    def image_types(self):
+        return [
+            DNodeTypes.PLOT
+        ]
 
 
 class DNode:
@@ -44,7 +62,11 @@ class DNode:
         # set default path as root path with directory name
         self.__path = kwargs.get('path', f"./{dir_name}")
 
+        # node children
         self.children: list = []
+
+        # node content
+        self.content = None
 
     def add(self, child) -> None:
         """
@@ -60,6 +82,10 @@ class DNode:
         Returns the node name
         """
         return self.__name
+
+    @property
+    def node_type(self):
+        return self.__type
 
     @property
     def dir_name(self):
@@ -199,7 +225,7 @@ class DataCenter:
         self.__path = kwargs.get('path', "./")
         # create NTree from directories
         self.__r_tree, self.__d_tree = self.__load_nodes()
-        self.__load_build_params()
+        self.__load_content()
 
         rprint(self.__r_tree)
         print(self.__d_tree.children[0].children[0].children[0], self.__d_tree.children[1])
@@ -234,8 +260,10 @@ class DataCenter:
         # return tree
         return queue_to_tree(lst)
 
-    def __load_build_params(self):
-
+    def __load_content(self):
+        """
+        Load the content of the database into an N-Tree
+        """
         queue = deque([self.__d_tree])
 
         while queue:
@@ -247,9 +275,17 @@ class DataCenter:
                 with open(f"{dummy.path}/build_params.txt", "r") as f:
                     dummy.build_params = f.read()
 
+            if (dummy.node_type in DNodeTypes.csv_types()) and "content.csv" in content:
+                dummy.value = read_csv(f"{dummy.path}/content")
+
+            elif dummy.node_type in DNodeTypes.image_types and "content.png" in content:
+                dummy.value = Image.open(f"{self.__path}/content.png")
+
             queue += deque(dummy.children)
 
 
 if __name__ == '__main__':
     DataCenter()
+
+
     pass
