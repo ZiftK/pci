@@ -264,23 +264,33 @@ class DataCenter:
         """
         Load the content of the database into an N-Tree
         """
+
+        # queue to transversal iterate
         queue = deque([self.__d_tree])
 
-        while queue:
+        while queue:  # while queue is not empty
+
+            # get first node in queue
             dummy = queue.popleft()
 
+            # get content of node directory
             content = [file.name for file in os.scandir(dummy.path) if file.is_file()]
 
+            # if "build_params.txt" exists in directory
             if "build_params.txt" in content:
+                # load content
                 with open(f"{dummy.path}/build_params.txt", "r") as f:
                     dummy.build_params = f.read()
 
+            # if node is a csv node type, and has a content, load csv content
             if (dummy.node_type in DNodeTypes.csv_types()) and "content.csv" in content:
                 dummy.value = read_csv(f"{dummy.path}/content")
 
+            # if node is an image node type and has a content, load image
             elif dummy.node_type in DNodeTypes.image_types and "content.png" in content:
                 dummy.value = Image.open(f"{self.__path}/content.png")
 
+            # add dummy children to queue
             queue += deque(dummy.children)
 
 
