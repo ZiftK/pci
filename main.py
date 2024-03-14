@@ -1,5 +1,3 @@
-import numpy as np
-
 import pci as pci
 import pandas as pd
 from numpy import sin

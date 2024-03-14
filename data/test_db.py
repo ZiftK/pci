@@ -8,22 +8,49 @@ from collections import deque
 import os
 
 
-def queue_to_tree(lst: list, tree_type: type(Tree) = Tree) -> Tree:
+class DNodeTypes(Enum):
+    ROOT = "root"
+    FUNCTION = "f"
+    INPUT_SET = "is"
+    OUTPUT_SET = "os"
+    ANALYZE_SET = "as"
+    PLOT = "p"
+
+
+class DNode(Tree):
+
+    def __init__(self, name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs) -> None:
+        super().__init__(name, *args, **kwargs)
+
+        self.__type: DNodeTypes = node_type
+        self.__build_params: dict = kwargs.get('build_params', dict())
+
+    def __str__(self):
+        return f"Type: {self.__type.name}\n Build: {self.__build_params}"
+
+
+def queue_to_tree(lst: list) -> DNode:
     """
     Transform a list of values into a tree graph
     """
+
+    if lst[1]:
+        raise Exception("The list not represents a valid tree")
+
+    # transform list to queue struct
+    queue = deque(lst)
+
     # init root path
-    root = tree_type("root")
+    root = DNode(queue.popleft())
+    queue.popleft()
 
     # initialize dummy as root
     dummy = root
 
-    # transform list to queue struct
-    queue = deque(lst)
     # initialize node queue
     node_queue = deque()
 
-    while len(queue) > 0:
+    while queue:
         # While queue is not empty keep loop.
         # This is done because we will be adding
         # nodes to the tree as long as there are
@@ -60,32 +87,11 @@ def queue_to_tree(lst: list, tree_type: type(Tree) = Tree) -> Tree:
         # corresponding children. Finally,
         # we add the node as a child to
         # the current pointer
-        child = Tree(element)
+        child = DNode(element, node_type=DNodeTypes(element.lower().split("_")[0]))
         node_queue.append(child)
         dummy.add(child)
 
     return root
-
-
-class DNodeTypes(Enum):
-    ROOT = "root"
-    FUNCTION = "function"
-    INPUT_SET = "input set"
-    OUTPUT_SET = "output set"
-    ANALYZE_SET = "analyze set"
-    PLOT = "plot"
-
-
-class DNode(Tree):
-
-    def __init__(self, name: str, dtype: DNodeTypes, *args, **kwargs) -> None:
-        super().__init__(name, *args, **kwargs)
-
-        self.__type = DNodeTypes(dtype)
-        self.__build_params: dict = kwargs.get('build_params', dict())
-
-    def __str__(self):
-        return f"Type: {self.__type.value}\n Build: {self.__build_params}"
 
 
 class DataCenter:
@@ -98,21 +104,42 @@ class DataCenter:
         # root path
         self.__path = kwargs.get('path', "./")
         # create NTree from directories
-        self.__load_nodes()
+        self.__tree = self.__load_nodes()
 
-    def __load_nodes(self) -> None:
-        pass
+        rprint(self.__tree)
+        print(self.__tree.children)
+
+    def __load_nodes(self) -> DNode:
+        """
+        Traverse the folder tree of the current path and transform it into an N-Tree.
+        """
+
+        # adjacent list to convert into tree
+        lst = []
+        types_list = []
+
+        # queue to save tree levels
+        queue = deque()
+
+        # add current path
+        queue.append(self.__path)
+
+        # if the paths queue is not empty
+        while len(queue) > 0:
+            # set current path as first item of paths queue
+            path = queue.popleft()
+
+            # list of directories in current path
+            add_list = [dr.name for dr in os.scandir(path) if dr.is_dir()]
+            # add None element to switch tree level
+            lst += add_list + [None]
+            # add level to paths queue
+            queue += deque([path + f"{dr_name}/" for dr_name in add_list])
+
+        # return tree
+        return queue_to_tree(lst)
 
 
 if __name__ == '__main__':
-    tree_list = [
-        "a", "b", "c", None,
-        "a1", "a2", None,
-        None,
-        "c1", "c2", None,
-        None,
-        None,
-        "c1.1"
-    ]
-
+    DataCenter()
     pass
