@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from rich.tree import Tree
 from rich import print as rprint
 
@@ -17,11 +19,9 @@ class DNodeTypes(Enum):
     PLOT = "p"
 
 
-class DNode(Tree):
+class DNode:
 
     def __init__(self, name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs) -> None:
-        super().__init__(name, *args, **kwargs)
-
         self.__type: DNodeTypes = node_type
         self.__build_params: dict = kwargs.get('build_params', dict())
 
@@ -29,7 +29,7 @@ class DNode(Tree):
         return f"Type: {self.__type.name}\n Build: {self.__build_params}"
 
 
-def queue_to_tree(lst: list) -> DNode:
+def queue_to_tree(lst: list) -> tuple[Tree, DNode]:
     """
     Transform a list of values into a tree graph
     """
@@ -41,14 +41,18 @@ def queue_to_tree(lst: list) -> DNode:
     queue = deque(lst)
 
     # init root path
-    root = DNode(queue.popleft())
+    r_root = Tree(queue.popleft())  # root of rich tree
+    d_root = DNode(queue.popleft())  # root of DNode tree
+
     queue.popleft()
 
     # initialize dummy as root
-    dummy = root
+    r_dummy = r_root
+    d_dummy = d_root
 
     # initialize node queue
-    node_queue = deque()
+    r_node_queue = deque()
+    d_node_queue = deque()
 
     while queue:
         # While queue is not empty keep loop.
@@ -68,13 +72,14 @@ def queue_to_tree(lst: list) -> DNode:
         # one in the node queue
         if not element:
 
-            if len(node_queue) > 0:
+            if len(r_node_queue) > 0:
                 # If the node list still has elements,
                 # we change the pointer (dummy) to
                 # the next one in the list and proceed
                 # to the next iteration. This ensures
                 # that we add the children to the correct node
-                dummy = node_queue.popleft()
+                r_dummy = r_node_queue.popleft()
+                d_dummy = d_node_queue.popleft()
                 continue
 
             # If the node list is already empty
@@ -87,11 +92,16 @@ def queue_to_tree(lst: list) -> DNode:
         # corresponding children. Finally,
         # we add the node as a child to
         # the current pointer
-        child = DNode(element, node_type=DNodeTypes(element.lower().split("_")[0]))
-        node_queue.append(child)
-        dummy.add(child)
+        r_child = Tree(element)
+        d_child = DNode(element, node_type=DNodeTypes(element.lower().split("_")[0]))
 
-    return root
+        r_node_queue.append(r_child)
+        d_node_queue.appendleft(d_child)
+
+        r_dummy.add(r_child)
+        d_dummy.add(d_child)
+
+    return r_root, d_root
 
 
 class DataCenter:
@@ -101,15 +111,17 @@ class DataCenter:
         Facade for managing test data for PCI
         """
 
+        super().__init__(*args, **kwargs)
+
         # root path
         self.__path = kwargs.get('path', "./")
         # create NTree from directories
-        self.__tree = self.__load_nodes()
+        self.__r_tree, self.__d_tree = self.__load_nodes()
 
-        rprint(self.__tree)
-        print(self.__tree.children)
+        rprint(self.__r_tree)
+        print(self.__d_tree)
 
-    def __load_nodes(self) -> DNode:
+    def __load_nodes(self) -> tuple[Tree, DNode]:
         """
         Traverse the folder tree of the current path and transform it into an N-Tree.
         """
