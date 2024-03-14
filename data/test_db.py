@@ -22,8 +22,6 @@ class DNodeTypes(Enum):
 class DNode:
 
     def __init__(self, name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs) -> None:
-
-
         self.__type: DNodeTypes = node_type
         self.__build_params: dict = kwargs.get('build_params', dict())
 
@@ -48,8 +46,9 @@ def queue_to_tree(lst: list) -> tuple[Tree, DNode]:
     queue = deque(lst)
 
     # init root path
-    r_root = Tree(queue.popleft())  # root of rich tree
-    d_root = DNode(queue.popleft())  # root of DNode tree
+    element = queue.popleft()
+    r_root = Tree(element)  # root of rich tree
+    d_root = DNode(element)  # root of DNode tree
 
     queue.popleft()
 
@@ -125,8 +124,8 @@ class DataCenter:
         # create NTree from directories
         self.__r_tree, self.__d_tree = self.__load_nodes()
 
-
-
+        rprint(self.__r_tree)
+        print(self.__d_tree)
     def __load_nodes(self) -> tuple[Tree, DNode]:
         """
         Traverse the folder tree of the current path and transform it into an N-Tree.
