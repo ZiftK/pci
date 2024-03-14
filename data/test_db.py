@@ -22,8 +22,15 @@ class DNodeTypes(Enum):
 class DNode:
 
     def __init__(self, name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs) -> None:
+
+
         self.__type: DNodeTypes = node_type
         self.__build_params: dict = kwargs.get('build_params', dict())
+
+        self.children: list = []
+
+    def add(self, child) -> None:
+        self.children.append(child)
 
     def __str__(self):
         return f"Type: {self.__type.name}\n Build: {self.__build_params}"
@@ -118,8 +125,7 @@ class DataCenter:
         # create NTree from directories
         self.__r_tree, self.__d_tree = self.__load_nodes()
 
-        rprint(self.__r_tree)
-        print(self.__d_tree)
+
 
     def __load_nodes(self) -> tuple[Tree, DNode]:
         """
