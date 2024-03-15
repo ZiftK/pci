@@ -59,8 +59,9 @@ class DNode:
         # try to get build params
         self.__build_params: str = kwargs.get("build_params", "NA")
 
+        d_path = "/".join(__file__.split("\\")[:-1])
         # set default path as root path with directory name
-        self.__path = kwargs.get('path', f"./{dir_name}")
+        self.__path = kwargs.get('path', f'{d_path}/{dir_name}')
 
         # node children
         self.children: list = []
@@ -139,6 +140,7 @@ def queue_to_tree(lst: list) -> tuple[Tree, DNode]:
     """
 
     if lst[1]:
+
         raise Exception("The list not represents a valid tree")
 
     # transform list to queue struct
@@ -222,7 +224,7 @@ class DataCenter:
         super().__init__(*args, **kwargs)
 
         # root path
-        self.__path = kwargs.get('path', "./")
+        self.__path = kwargs.get('path', "\\".join(__file__.split("\\")[:-1]) + "\\")
         self.__p_splitter = kwargs.get('path_splitter', ".")
         # create NTree from directories
         self.__r_tree, self.__d_tree = self.__load_nodes()
@@ -295,7 +297,12 @@ class DataCenter:
             queue += deque(dummy.children)
 
     def __search_by_path(self, path: str):
-
+        """
+        Searches for a node in the tree graph whose
+        path matches the specified one; if not found, it throws an exception
+        :param path: node path
+        :return: tuple with match rich node and data node
+        """
         # split path using class splitter
         path = path.split(self.__p_splitter)
 
@@ -331,7 +338,7 @@ class DataCenter:
 
 if __name__ == '__main__':
     a = DataCenter()
-    a.cd("f_tanx")
+    # a.cd("f_tanx")
     a.show()
 
     pass
