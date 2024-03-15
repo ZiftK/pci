@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/PCI.iml" filepath="$PROJECT_DIR$/.idea/PCI.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/pci.iml" filepath="$PROJECT_DIR$/.idea/pci.iml" />
     </modules>
   </component>
 </project>
