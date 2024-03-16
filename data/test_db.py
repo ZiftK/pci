@@ -200,6 +200,19 @@ class DFNode(DNode):
         pass
 
 
+class NodeFactory:
+    _references = {
+        DNodeTypes.ROOT: DRNode,
+        DNodeTypes.FUNCTION: DFNode
+    }
+
+    @staticmethod
+    def get_reference(node_type: DNodeTypes):
+        """
+        Return class reference of a node type specified by node_type
+        """
+        return NodeFactory._references.get(node_type, None)
+
 
 def queue_to_tree(lst: list) -> tuple[Tree, DNode]:
     """
