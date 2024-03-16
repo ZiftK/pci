@@ -1,4 +1,4 @@
-from typing import Tuple
+from abc import ABC, abstractmethod
 
 from rich.tree import Tree
 from rich import print as rprint
@@ -37,7 +37,7 @@ class DNodeTypes(Enum):
         ]
 
 
-class DNode:
+class DNode(ABC):
 
     def __init__(self, dir_name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs) -> None:
         """
@@ -48,6 +48,7 @@ class DNode:
         :param node_type: DNode type [root,function,input,output,analysis,plot]
         """
 
+        # node type
         self.__type: DNodeTypes = node_type
 
         # clear dir name to get node name
@@ -59,8 +60,8 @@ class DNode:
         # try to get build params
         self.__build_params: str = kwargs.get("build_params", "NA")
 
-        d_path = "/".join(__file__.split("\\")[:-1])
         # set default path as root path with directory name
+        d_path = "/".join(__file__.split("\\")[:-1])
         self.__path = kwargs.get('path', f'{d_path}/{dir_name}')
 
         # node children
@@ -76,6 +77,31 @@ class DNode:
         """
         child.path = f"{self.path}/{child.dir_name}"
         self.children.append(child)
+
+    def load_content(self):
+        """
+        Load Node content from Node path
+        """
+        path_content = os.scandir(self.path)
+
+        if not ("build_params.txt" in path_content):
+            # TODO: Log error
+            pass
+
+        # TODO: save build params
+        return path_content
+
+    @abstractmethod
+    def generate_content(self):
+        """
+        Generates content depending on the specific node implementation
+        """
+
+    @abstractmethod
+    def save_content(self):
+        """
+        Save Node content
+        """
 
     @property
     def name(self) -> str:
@@ -134,13 +160,34 @@ class DNode:
                 "\n")
 
 
+class DFNode(DNode):
+
+    def __init__(self, dir_name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs):
+        super.__init__(dir_name, node_type, *args, **kwargs)
+
+    def load_content(self):
+        path_content = super().load_content()
+
+        if not ("content.io" in path_content):
+            # TODO: Log error
+            pass
+
+        # TODO: save content
+
+    def generate_content(self):
+        pass
+
+    def save_content(self):
+        pass
+
+    
+
 def queue_to_tree(lst: list) -> tuple[Tree, DNode]:
     """
     Transform a list of values into a tree graph
     """
 
     if lst[1]:
-
         raise Exception("The list not represents a valid tree")
 
     # transform list to queue struct
@@ -332,8 +379,8 @@ class DataCenter:
         self.__r_dummy, self.__d_dummy = self.__search_by_path(path)
 
     def show(self):
-        rprint(self.__r_dummy)
-        print(self.__d_dummy)
+        rprint(self.__r_dummy, end="\r")
+        print(self.__d_dummy, end="\r")
 
 
 if __name__ == '__main__':
