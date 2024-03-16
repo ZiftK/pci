@@ -160,6 +160,23 @@ class DNode(ABC):
                 "\n")
 
 
+class DRNode(DNode):
+
+    def __init__(self, dir_name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs):
+        super.__init__(dir_name, node_type, *args, **kwargs)
+
+    def load_content(self):
+        path_content = super().load_content()
+
+    def generate_content(self):
+        # TODO: add logic
+        pass
+
+    def save_content(self):
+        # TODO: add logic
+        pass
+
+
 class DFNode(DNode):
 
     def __init__(self, dir_name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs):
@@ -175,12 +192,14 @@ class DFNode(DNode):
         # TODO: save content
 
     def generate_content(self):
+        # TODO: add logic
         pass
 
     def save_content(self):
+        # TODO: add logic
         pass
 
-    
+
 
 def queue_to_tree(lst: list) -> tuple[Tree, DNode]:
     """
