@@ -487,6 +487,7 @@ class DataCenter:
             # if not exists child with specified name, rais exception
             if not n_d_dummy:
                 raise Exception("No such directory")
+                # TODO: replace this exception for error message
 
             # set rich dummy to child with match index
             r_dummy = r_dummy.children[d_dummy.children.index(n_d_dummy)]
