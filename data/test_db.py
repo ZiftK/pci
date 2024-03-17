@@ -299,7 +299,11 @@ class DPNode(DNode):
 class NodeFactory:
     _references = {
         DNodeTypes.ROOT: DRNode,
-        DNodeTypes.FUNCTION: DFNode
+        DNodeTypes.FUNCTION: DFNode,
+        DNodeTypes.INPUT_SET: DISNode,
+        DNodeTypes.OUTPUT_SET: DOSNode,
+        DNodeTypes.ANALYZE_SET: DASNode,
+        DNodeTypes.PLOT: DPNode
     }
 
     @staticmethod
