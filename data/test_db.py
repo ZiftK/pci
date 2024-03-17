@@ -227,6 +227,75 @@ class DISNode(DNode):
         pass
 
 
+class DOSNode(DNode):
+
+    def __init__(self, dir_name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs):
+        super.__init__(dir_name, node_type, *args, **kwargs)
+
+    def load_content(self):
+        path_content = super().load_content()
+
+        if not ("content.csv" in path_content):
+            # TODO: Log error
+            pass
+
+        self.content = read_csv(f"{self.path}/content.csv")
+
+    def generate_content(self):
+        # TODO: add logic
+        pass
+
+    def save_content(self):
+        # TODO: add logic
+        pass
+
+
+class DASNode(DNode):
+
+    def __init__(self, dir_name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs):
+        super.__init__(dir_name, node_type, *args, **kwargs)
+
+    def load_content(self):
+        path_content = super().load_content()
+
+        if not ("content.csv" in path_content):
+            # TODO: Log error
+            pass
+
+        self.content = read_csv(f"{self.path}/content.csv")
+
+    def generate_content(self):
+        # TODO: add logic
+        pass
+
+    def save_content(self):
+        # TODO: add logic
+        pass
+
+
+class DPNode(DNode):
+
+    def __init__(self, dir_name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs):
+        super.__init__(dir_name, node_type, *args, **kwargs)
+
+    def load_content(self):
+        path_content = super().load_content()
+
+        if not ("content.png" in path_content):
+            # TODO: Log error
+            pass
+
+        self.content = Image.open(f"{self.path}/content.png")
+
+    def generate_content(self):
+        # TODO: add logic
+        pass
+
+    def save_content(self):
+        # TODO: add logic
+        pass
+
+
 class NodeFactory:
     _references = {
         DNodeTypes.ROOT: DRNode,
