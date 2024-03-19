@@ -22,19 +22,14 @@ class DNodeTypes(Enum):
     ANALYZE_SET = "as"
     PLOT = "p"
 
-    @staticmethod
-    def csv_types():
-        return [
-            DNodeTypes.INPUT_SET,
-            DNodeTypes.OUTPUT_SET,
-            DNodeTypes.ANALYZE_SET
-        ]
 
-    @staticmethod
-    def image_types():
-        return [
-            DNodeTypes.PLOT
-        ]
+class DNodeTLevels(Enum):
+    ROOT = 0
+    FUNCTION = 1
+    INPUT_SET = 2
+    OUTPUT_SET = 3
+    ANALYZE_SET = 4
+    PLOT = 5
 
 
 class DNode(ABC):
@@ -500,10 +495,15 @@ class DataCenter:
         return r_dummy, d_dummy  # return dummy's tuple
 
     def cd(self, path):
-
+        """
+        Changes the current directory in N-Tree graph
+        """
         self.__r_dummy, self.__d_dummy = self.__search_by_path(path)
 
     def show(self):
+        """
+        Show N-Tree graph
+        """
         rprint(self.__r_dummy, end="\r")
         print(self.__d_dummy, end="\r")
 
