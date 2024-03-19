@@ -12,9 +12,7 @@ from numpy import array, matrix, linalg, round, delete, arange
 
 from matplotlib import pyplot as plt
 
-from itertools import product as cart_pdct
 from testing.metrics import exec_time
-
 
 from numpy import array
 from numpy import arange
@@ -421,13 +419,13 @@ class PCI:
         # dynamic effective data range
 
         # check if inside static effective data range
-        if self.__ssp.is_inside_ef(point,"x"):
+        if self.__ssp.is_inside_ef(point, "x"):
             return self.__ssp.apply_pol(point)
 
         # check if inside dynamic effective data range
-        elif self.__dsp.is_inside_ef(point,"x"):
+        elif self.__dsp.is_inside_ef(point, "x"):
             return self.__dsp.apply_pol(point)
-        
+
         # it is inside static limits?
         elif self.__ssp.dr.is_inside(point, "x"):
 
@@ -444,10 +442,10 @@ class PCI:
         # that it is within the dynamic range or it is outside all ranges.
 
         # check if point is inside dynamic range
-        in_dynamic = self.__dsp.dr.is_inside(point,"x")
-            
-        if in_dynamic: #* if point is in dynamic range
-            
+        in_dynamic = self.__dsp.dr.is_inside(point, "x")
+
+        if in_dynamic:  # * if point is in dynamic range
+
             # apply polinomial solution to dynamic solve package
             return self.__dsp.apply_pol(point)
 
@@ -532,303 +530,6 @@ class PCI:
         return self.__dsp
 
 
-class PTest:
-
-    @staticmethod
-    def relative_error(real_val, aprox_val):
-        """
-        Calculate relative error from real value and his aproximate value
-        """
-        return 100 * abs((real_val - aprox_val) / real_val)
-
-    @staticmethod
-    @exec_time
-    def uniform_data_range(
-            df: dfop.DataFrame,
-            function,
-            offset_range: list,
-            rounder_range: list,
-            show_progress=True,
-            force_train=False):
-        """
-        Generate predictions for all possible combinations using the
-        value ranges of 'offset' and 'rounder,' as well as intermediate values for each dataset.
-
-        Params
-        ---------
-        df -> This is a DataFrame that will be used to make tests
-
-        function -> This parameter should be a function or an
-        executable that returns a real value for the 'x' input.
-        This real value will be compared with the approximate value
-        to calculate the approximation error.
-
-        offset_range -> It is a list of values that represents all
-        offsets that will be used to train the PCI system for all approximations.
-
-        rounder_range -> It is a list of values that represents all-rounders that will be used to train the PCI system for all aproximations.
-
-        [optional] show_progress -> If set to True, print a loading bar that shows
-        the progress of the data approximations. If set to False, this loading bar is not shown
-        """
-
-        # If show_progress is True, import sys.stdout to
-        # show loading bar
-        from sys import stdout
-
-        # Initialize new DataFrame to return it
-        rtn_df = dfop.DataFrame()
-
-        # Initialize a new list to store the
-        # values that will be used as inputs
-        # to make approximations with the PCI system
-        inputs = list()
-
-        # Extract the values from the 'x'
-        # column of the DataFrame
-        x_vals = df["x"].to_list()
-
-        # Get the count of input values
-        length = len(x_vals)
-
-        # The values with which the PCI system's ability
-        # to make predictions will be evaluated will not
-        # be the exact values in the 'x' column of the dataset.
-        # Instead, intermediate values will be used as it is
-        # estimated that these carry a greater margin of error.
-        # To create this set of evaluation inputs, all values from
-        # the 'x' column of the initial dataset will be considered,
-        # and the average of each contiguous set of values
-        # will be calculated
-        for i, x in enumerate(x_vals):
-
-            # If index is out of index range from values list
-            if i + 1 >= length:
-                break  # break loop
-
-            inputs.append((x + x_vals[i + 1]) / 2)
-
-        # To avoid using three nested for loops, we use the Cartesian product
-        # to calculate all possible combinations for different values of
-        # 'offset,' 'rounder,' and 'x'.
-        product = list(cart_pdct(offset_range, rounder_range, inputs))
-
-        # iteration count
-        iters = len(product)
-
-        print(f"\n\nElements count {iters:,}...\n\n")
-
-        for i, element in enumerate(product):
-            # For each possible combination of (offset, rounder, x),
-            # we will generate a PCI approximation for the trio of values.
-
-            if show_progress:
-                # If the 'show_progress' variable was set
-                # to true, display a loading bar
-
-                cur = i / iters
-                bar = "=" * int(50 * cur)
-                spaces = " " * (50 - len(bar))
-                stdout.write(f"\r\tProcess: [{bar}{spaces}] {int(cur * 100)}% - {i:,} of {iters:,}")
-                stdout.flush()
-
-            # Get real val evaluating in real function
-            real_val = function(element[2])
-
-            # Get approximate value evaluating in PCI system
-            psys = PCI(df, offset=element[0], rounder=element[1])
-            if not force_train:
-                approx_val = psys.predict(element[2])
-            else:
-                approx_val = psys.force_predict(element[2])
-            # Struct to data frame
-            rtn_df = rtn_df._append(
-                {
-                    "offset": element[0],
-                    "rounder": element[1],
-                    "x": element[2],
-                    "Real value": real_val,
-                    "Approx value": approx_val,
-                    "Error %": PTest.relative_error(real_val, approx_val),
-                    "Dynamic function": str(psys.dynamic_sp),
-                    "Static function": f"\"{str(psys.static_sp)}\"",
-                    "Force train in predict": force_train
-                },
-                ignore_index=True
-
-            )
-
-        return rtn_df
-
-    @staticmethod
-    def generate_data(function: callable, initial_value, final_value, step) -> dfop.DataFrame:
-        """
-
-        """
-        inputs = [x for x in arange(initial_value, final_value, step)]
-        outputs = [function(x) for x in inputs]
-
-        rows = zip(inputs, outputs)
-
-        rtn = dfop.DataFrame(rows, columns=["x", "y"])
-
-        return rtn
-
-    @staticmethod
-    def generate_test(
-            function: callable,
-            in_set_initial_value,
-            in_set_final_value,
-            in_set_step,
-            out_set_offset_range,
-            out_set_rounder_range,
-            force_train=False
-
-    ) -> dfop.DataFrame:
-        """
-
-        Params
-        ---------------
-
-        function ->
-
-        in_set_initial_value ->
-
-        in_set_final_value ->
-
-        in_set_steps ->
-
-        out_set_offset_range ->
-
-        out_set_rounder_range ->
-
-        force_train ->
-
-
-        """
-
-        in_save_path = f"data\\input_sets\\generate\\{function.__name__}_" \
-                       f"[{in_set_initial_value},{in_set_final_value}]_{in_set_step}.csv"
-
-        out_save_path = f"data\\output_sets\\generate\\{function.__name__}_" \
-                        f"[{in_set_initial_value},{in_set_final_value}]_{in_set_step}" \
-                        f"__o[{min(out_set_offset_range), max(out_set_offset_range)}]" \
-                        f"_r[{min(out_set_rounder_range), max(out_set_rounder_range)}].csv"
-
-        in_df = PTest.generate_data(function, in_set_initial_value, in_set_final_value, in_set_step)
-
-        out_df = PTest.uniform_data_range(
-            in_df,
-            function,
-            out_set_offset_range,
-            out_set_rounder_range,
-            force_train=force_train
-        )
-
-        in_df.to_csv(in_save_path)
-        out_df.to_csv(out_save_path)
-
-    @staticmethod
-    def plot_val_input_vs_error(df: dfop.DataFrame, **kwargs):
-        """
-        This function plots the output set using the 'x'
-        test value as the index and the percentage error as their relation.
-
-        df -> PCI output set (Pandas DataFrame)
-
-        up_ticks -> ticks of up axis
-
-        up_labels -> labels of up axis
-
-        auto_upx -> number of maximum points indicated
-        """
-
-        # get 'x' and 'Error' column
-        df = df[["x", "Error %"]]
-
-        # To graph this DataFrame, we need to set the 'x'
-        # column as the index. Then, the DataFrame will
-        # be graphed as 'x' versus 'Error'.
-        df = df.set_index("x")
-
-        #
-        # We need to calculate the maximum error because
-        # this value represents the top of the plot,
-        # and the lines indicating the sign must go from bottom to top
-        max_error = df["Error %"].max()
-
-        # Sub-plots to new axis
-        fig, ax = plt.subplots()
-
-        # Main plot
-        ax.plot(df)
-
-        # Add grid to plot
-        plt.grid()
-
-        # If 'up_ticks' is not None, this list
-        # of values will be plotted as vertical lines
-        if kwargs.get("up_ticks") is not None:
-            # create new axis
-            ax_2 = ax.twiny()
-            ax_2.xaxis.set_ticks_position('top')
-
-            ax_2.set_xticks(kwargs.get("up_ticks"))
-            ax_2.set_xticklabels(kwargs.get("up_labels", []))
-
-            # remove unused kwargs
-            kwargs.pop("up_ticks")
-            kwargs.pop("up_labels")
-
-            for xin in kwargs.get("up_ticks"):
-                plt.plot([xin, xin], [0, max_error], **kwargs)
-
-        # If "auto_upx" is set to int greater than 1,
-        # plot aux lines on the 'x' values that maximum
-        # error.
-        if kwargs.get("auto_upx", None) is not None:
-
-            # Get error values
-            error = [x for x in df["Error %"].values]
-            # Get x values
-            x_s = [index for index in df.index.values]
-
-            # Pair error and x values
-            sort_vals = list(zip(x_s, error))
-
-            # Sort the paired list from maximum error to minimum error
-            sort_vals.sort(key=lambda x: x[1], reverse=True)
-
-            # We separate the sorted x values with respect to the error
-            x_val = [index[0] for index in sort_vals]
-
-            # Select the specified signs count
-            x_val = x_val[:kwargs.get("auto_upx")]
-
-            # create new axis
-            ax_2 = ax.twiny()
-            ax_2.xaxis.set_ticks_position('top')
-
-            # Set the x limits of up axis to the limits of
-            # the bottom axis
-            ax_2.set_xlim(ax.get_xlim())
-
-            # Set ticks of up axis to the 'x' values
-            # with the maximum error, and their labels to
-            ax_2.set_xticks(x_val)
-            ax_2.set_xticklabels(x_val)
-
-            # Remove auto_upx to
-            kwargs.pop("auto_upx")
-
-            # Draw sign lines
-            for v in x_val:
-                plt.plot([v, v], [0, max_error], **kwargs)
-
-        plt.show()
-        pass
-
-
 class GEnP:
 
     def __init__(self, df, **kwargs):
@@ -851,7 +552,6 @@ class GEnP:
 
         # Convert each group into data frame
         self.__groups = [group for _, group in grouped]
-
 
 
 if __name__ == "__main__":
