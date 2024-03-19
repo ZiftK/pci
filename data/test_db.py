@@ -50,11 +50,11 @@ class DNode:
 
         self.__type: DNodeTypes = node_type
 
-        # clear dir name to get node name
-        self.__name = dir_name.replace(self.__type.value + "_", "")
-
         # directory name
         self.__dir_name = dir_name
+
+        # clear dir name to get node name
+        self.__name = dir_name.replace(self.__type.value + "_", "")
 
         # try to get build params
         self.__build_params: str = kwargs.get("build_params", "NA")
@@ -138,6 +138,7 @@ def queue_to_tree(lst: list) -> tuple[Tree, DNode]:
     Transform a list of values into a tree graph
     """
 
+    print(lst)
     if lst[1]:
         raise Exception("The list not represents a valid tree")
 

@@ -65,7 +65,7 @@ def uniform_data_range(
     offsets that will be used to train the PCI system for all approximations.
 
     :param rounder_range: It is a list of values that represents all-rounders
-    that will be used to train the PCI system for all aproximations.
+    that will be used to train the PCI system for all approximations.
 
     :param show_progress: If set to True, print a loading bar that shows
     the progress of the data approximations. If set to False, this loading bar is not shown
@@ -159,3 +159,5 @@ def uniform_data_range(
         )
 
     return rtn_df
+
+
