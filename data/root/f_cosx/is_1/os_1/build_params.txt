@@ -1,2 +1,0 @@
-function=cosx
-range=[1,10]
