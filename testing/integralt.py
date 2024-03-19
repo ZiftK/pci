@@ -54,20 +54,24 @@ def uniform_data_range(
 
     Params
     ---------
-    df -> This is a DataFrame that will be used to make tests
+    :param df: This is a DataFrame that will be used to make tests
 
-    function -> This parameter should be a function or an
+    :param function:  This parameter should be a function or an
     executable that returns a real value for the 'x' input.
     This real value will be compared with the approximate value
     to calculate the approximation error.
 
-    offset_range -> It is a list of values that represents all
+    :param offset_range: It is a list of values that represents all
     offsets that will be used to train the PCI system for all approximations.
 
-    rounder_range -> It is a list of values that represents all-rounders that will be used to train the PCI system for all aproximations.
+    :param rounder_range: It is a list of values that represents all-rounders
+    that will be used to train the PCI system for all aproximations.
 
-    [optional] show_progress -> If set to True, print a loading bar that shows
+    :param show_progress: If set to True, print a loading bar that shows
     the progress of the data approximations. If set to False, this loading bar is not shown
+
+    :param force_train: If set to True force the system to retrain
+    for each approximated value (does not use the effective range)
     """
 
     # If show_progress is True, import sys.stdout to
