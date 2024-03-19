@@ -15,21 +15,12 @@ import os
 
 
 class DNodeTypes(Enum):
-    ROOT = "rt"
-    FUNCTION = "f"
-    INPUT_SET = "is"
-    OUTPUT_SET = "os"
-    ANALYZE_SET = "as"
-    PLOT = "p"
-
-
-class DNodeTLevels(Enum):
-    ROOT = 0
-    FUNCTION = 1
-    INPUT_SET = 2
-    OUTPUT_SET = 3
-    ANALYZE_SET = 4
-    PLOT = 5
+    ROOT = "rt", 0
+    FUNCTION = "f", 1
+    INPUT_SET = "is", 2
+    OUTPUT_SET = "os", 3
+    ANALYZE_SET = "as", 4
+    PLOT = "p", 5
 
 
 class DNode(ABC):
