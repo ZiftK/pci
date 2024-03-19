@@ -8,7 +8,7 @@ from numpy import arange
 from itertools import product as c_product
 
 from testing.metrics import exec_time
-from pci import PCI
+from mathematics.pci import PCI
 
 
 def generate_data(
