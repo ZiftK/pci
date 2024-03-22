@@ -89,6 +89,11 @@ class DNode(ABC):
         Save Node content
         """
 
+    @abstractmethod
+    def _format_build_params(self)-> str:
+        """
+        Format build parameters in a string and return it
+        """
     @property
     def name(self) -> str:
         """
@@ -136,8 +141,7 @@ class DNode(ABC):
         self.__build_params = value if value != "" else "NA"
 
     def __str__(self):
-        build_params = self.build_params.replace("\n", "\n\t")
-        build_params = build_params.replace("=", " = ")
+        build_params = self._format_build_params()
         return ("\n"
                 f"Name: {self.__name}\n"
                 f"Type: {self.__type.name}\n "
@@ -159,6 +163,10 @@ class DRNode(DNode):
         pass
 
     def save_content(self):
+        # TODO: add logic
+        pass
+
+    def _format_build_params(self) -> str:
         # TODO: add logic
         pass
 
@@ -185,6 +193,10 @@ class DFNode(DNode):
         # TODO: add logic
         pass
 
+    def _format_build_params(self) -> str:
+        # TODO: add logic
+        pass
+
 
 class DISNode(DNode):
 
@@ -205,6 +217,10 @@ class DISNode(DNode):
         pass
 
     def save_content(self):
+        # TODO: add logic
+        pass
+
+    def _format_build_params(self) -> str:
         # TODO: add logic
         pass
 
@@ -232,6 +248,10 @@ class DOSNode(DNode):
         # TODO: add logic
         pass
 
+    def _format_build_params(self) -> str:
+        # TODO: add logic
+        pass
+
 
 class DASNode(DNode):
 
@@ -255,6 +275,10 @@ class DASNode(DNode):
         # TODO: add logic
         pass
 
+    def _format_build_params(self) -> str:
+        # TODO: add logic
+        pass
+
 
 class DPNode(DNode):
 
@@ -275,6 +299,10 @@ class DPNode(DNode):
         pass
 
     def save_content(self):
+        # TODO: add logic
+        pass
+
+    def _format_build_params(self) -> str:
         # TODO: add logic
         pass
 
@@ -524,15 +552,24 @@ class DataCenter:
 
     def add_node(self, name: str):
         """
+        Add node child in current node path.
 
+        :param name: name of node child
         """
-        print(self.__d_dummy.node_type)
+
+        # node child
         node = NodeFactory.get_node_child(name, self.__d_dummy.node_type)
-        print( self.__d_dummy.dir_name)
+
+        # add rich Tree node to current node path
         self.__r_dummy.children.append(Tree(node.dir_name))
+
+        # add DNode to current node path
         self.__d_dummy.add(node)
 
+        # create node directory
         # os.mkdir(node.path)
+
+        node.generate_content()
 
     def show(self):
         """
