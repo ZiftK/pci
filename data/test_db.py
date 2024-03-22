@@ -11,6 +11,8 @@ from pandas import DataFrame, read_csv
 
 from PIL import Image
 
+import importlib.util
+
 import os
 
 
@@ -90,10 +92,11 @@ class DNode(ABC):
         """
 
     @abstractmethod
-    def _format_build_params(self)-> str:
+    def _format_build_params(self) -> str:
         """
         Format build parameters in a string and return it
         """
+
     @property
     def name(self) -> str:
         """
@@ -156,7 +159,24 @@ class DRNode(DNode):
         super().__init__(dir_name, node_type, *args, **kwargs)
 
     def load_content(self):
+        # scan directory
         path_content = super().load_content()
+
+        # if "content.py" is in directory
+        if "content.py" in path_content:
+
+            # load module
+            specified_module = importlib.util.spec_from_file_location("functions", self.path + "\\content.py")
+            module = importlib.util.module_from_spec(specified_module)
+            specified_module.loader.exec_module(module)
+
+            # load module content
+            functions = dir(module)
+
+            # select functions only
+            self.content = [function for function in functions if callable(getattr(module, function))]
+
+
 
     def generate_content(self):
         # TODO: add logic
@@ -352,7 +372,6 @@ class NodeFactory:
 
         # if child type index is outside range _levels range
         if father_index + 1 >= len(NodeFactory._levels):
-
             # TODO: log error
             pass
 
@@ -468,7 +487,6 @@ class DataCenter:
 
         # adjacent list to convert into tree
         lst = []
-        types_list = []
 
         # queue to save tree levels
         queue = deque()
@@ -503,9 +521,6 @@ class DataCenter:
 
             # get first node in queue
             dummy = queue.popleft()
-
-            # get content of node directory
-            content = [file.name for file in os.scandir(dummy.path) if file.is_file()]
 
             # load DNode content
             dummy.load_content()
@@ -550,26 +565,26 @@ class DataCenter:
         """
         self.__r_dummy, self.__d_dummy = self.__search_by_path(path)
 
-    def add_node(self, name: str):
-        """
-        Add node child in current node path.
-
-        :param name: name of node child
-        """
-
-        # node child
-        node = NodeFactory.get_node_child(name, self.__d_dummy.node_type)
-
-        # add rich Tree node to current node path
-        self.__r_dummy.children.append(Tree(node.dir_name))
-
-        # add DNode to current node path
-        self.__d_dummy.add(node)
-
-        # create node directory
-        # os.mkdir(node.path)
-
-        node.generate_content()
+    # def add_node(self, name: str):
+    #     """
+    #     Add node child in current node path.
+    #
+    #     param name: name of node child
+    #     """
+    #
+    #     # node child
+    #     node = NodeFactory.get_node_child(name, self.__d_dummy.node_type)
+    #
+    #     # add rich Tree node to current node path
+    #     self.__r_dummy.children.append(Tree(node.dir_name))
+    #
+    #     # add DNode to current node path
+    #     self.__d_dummy.add(node)
+    #
+    #     # create node directory
+    #     # os.mkdir(node.path)
+    #
+    #     node.generate_content()
 
     def show(self):
         """
@@ -582,7 +597,6 @@ class DataCenter:
 if __name__ == '__main__':
     a = DataCenter()
     a.cd("f_cosx")
-    a.add_node("test")
     a.show()
 
     pass
