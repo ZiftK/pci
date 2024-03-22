@@ -9,6 +9,8 @@ from collections import deque
 
 from pandas import DataFrame, read_csv
 
+import json
+
 from PIL import Image
 
 import importlib.util
@@ -46,11 +48,14 @@ class DNode(ABC):
         self.__dir_name = dir_name
 
         # try to get build params
-        self.__build_params: str = kwargs.get("build_params", "NA")
+        self._build_params: str = kwargs.get("build_params", "NA")
 
         # set default path as root path with directory name
         d_path = "/".join(__file__.split("\\")[:-1])
         self.__path = kwargs.get('path', f'{d_path}/{dir_name}')
+
+        # node father
+        self.father: DNode = None
 
         # node children
         self.children: list = []
@@ -64,7 +69,9 @@ class DNode(ABC):
         :param child: node child
         """
         child.path = f"{self.path}/{child.dir_name}"
+        child.father = self
         self.children.append(child)
+        child.generate_content()
 
     def load_content(self):
         """
@@ -76,6 +83,9 @@ class DNode(ABC):
             # TODO: Log error
             pass
 
+        # load build params
+        self._build_params = json.loads(self.path + "\\build_params.txt")
+
         # TODO: save build params
         return path_content
 
@@ -84,17 +94,14 @@ class DNode(ABC):
         """
         Generates content depending on the specific node implementation
         """
+        # write build params
+        with open(self.path + "\\build_params.txt", "w") as file:
+            json.dump(self._build_params, file)
 
     @abstractmethod
     def save_content(self):
         """
         Save Node content
-        """
-
-    @abstractmethod
-    def execute_command(self, command: str):
-        """
-        Execute a specific command
         """
 
     @abstractmethod
@@ -140,14 +147,14 @@ class DNode(ABC):
         """
         Returns the build params text
         """
-        return self.__build_params
+        return self._build_params
 
     @build_params.setter
     def build_params(self, value: str) -> None:
         """
         Sets the build params as value if value is not empty
         """
-        self.__build_params = value if value != "" else "NA"
+        self._build_params = value if value != "" else "NA"
 
     def __str__(self):
         build_params = self._format_build_params()
@@ -164,25 +171,32 @@ class DRNode(DNode):
     def __init__(self, dir_name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs):
         super().__init__(dir_name, node_type, *args, **kwargs)
 
+    def add_node(self, child: DNode) -> None:
+
+        # load function names
+        functions = [function for function in dir(self.content) if callable(getattr(self.content, function))]
+
+        # if child name is in functions list
+        if child.name in functions:
+            super().add(child)  # add child
+
+        else:
+            # TODO: print error
+            pass
+
     def load_content(self):
         # scan directory
         path_content = super().load_content()
 
         # if "content.py" is in directory
         if "content.py" in path_content:
-
             # load module
             specified_module = importlib.util.spec_from_file_location("functions", self.path + "\\content.py")
             module = importlib.util.module_from_spec(specified_module)
             specified_module.loader.exec_module(module)
 
-            # load module content
-            functions = dir(module)
-
-            # select functions only
-            self.content = [function for function in functions if callable(getattr(module, function))]
-
-
+            # save module as content
+            self.content = module
 
     def generate_content(self):
         # TODO: add logic
@@ -212,7 +226,16 @@ class DFNode(DNode):
         # TODO: save content
 
     def generate_content(self):
-        # TODO: add logic
+        # load callable
+        self.content = getattr(self.father.content, self.name)
+
+        # build params
+        self._build_params = {
+            "function": self.name,
+            "noise": 0
+        }
+
+        super().generate_content()
         pass
 
     def save_content(self):
@@ -571,26 +594,26 @@ class DataCenter:
         """
         self.__r_dummy, self.__d_dummy = self.__search_by_path(path)
 
-    # def add_node(self, name: str):
-    #     """
-    #     Add node child in current node path.
-    #
-    #     param name: name of node child
-    #     """
-    #
-    #     # node child
-    #     node = NodeFactory.get_node_child(name, self.__d_dummy.node_type)
-    #
-    #     # add rich Tree node to current node path
-    #     self.__r_dummy.children.append(Tree(node.dir_name))
-    #
-    #     # add DNode to current node path
-    #     self.__d_dummy.add(node)
-    #
-    #     # create node directory
-    #     # os.mkdir(node.path)
-    #
-    #     node.generate_content()
+    def add_node(self, name: str):
+        """
+        Add node child in current node path.
+
+        param name: name of node child
+        """
+
+        # node child
+        node = NodeFactory.get_node_child(name, self.__d_dummy.node_type)
+
+        # add DNode to current node path
+        self.__d_dummy.add(node)
+
+        # add rich Tree node to current node path
+        self.__r_dummy.children.append(Tree(node.dir_name))
+
+        # create node directory
+        # os.mkdir(node.path)
+
+        node.generate_content()
 
     def show(self):
         """
