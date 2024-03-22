@@ -92,6 +92,12 @@ class DNode(ABC):
         """
 
     @abstractmethod
+    def execute_command(self, command: str):
+        """
+        Execute a specific command
+        """
+
+    @abstractmethod
     def _format_build_params(self) -> str:
         """
         Format build parameters in a string and return it
