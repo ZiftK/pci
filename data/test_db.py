@@ -42,13 +42,13 @@ class DNode(ABC):
         self.__type: DNodeTypes = DNodeTypes(node_type)
 
         # clear dir name to get node name
-        self.__name = dir_name.replace(self.__type.value + "_", "")
+        self.__name = dir_name.split("_")[1]
 
         # directory name
         self.__dir_name = dir_name
 
         # try to get build params
-        self._build_params: str = kwargs.get("build_params", "NA")
+        self._build_params: dict = kwargs.get("build_params", {})
 
         # set default path as root path with directory name
         d_path = "/".join(__file__.split("\\")[:-1])
@@ -71,7 +71,6 @@ class DNode(ABC):
         child.path = f"{self.path}/{child.dir_name}"
         child.father = self
         self.children.append(child)
-        child.generate_content()
 
     def load_content(self):
         """
@@ -79,14 +78,15 @@ class DNode(ABC):
         """
         path_content = os.scandir(self.path)
 
-        if not ("build_params.txt" in path_content):
-            # TODO: Log error
+        path_content = list(path_content)
+        path_content = [dr.name for dr in path_content]
+
+        if "build_params.txt" in path_content:
+            # load build params
+            with open(self.path + '\\build_params.txt', 'r') as file:
+                self._build_params = json.load(file)
             pass
 
-        # load build params
-        self._build_params = json.loads(self.path + "\\build_params.txt")
-
-        # TODO: save build params
         return path_content
 
     @abstractmethod
@@ -96,6 +96,8 @@ class DNode(ABC):
         """
         # write build params
         with open(self.path + "\\build_params.txt", "w") as file:
+            # TODO: I dont have any fuck idea that what happens
+            file.write("")
             json.dump(self._build_params, file)
 
     @abstractmethod
@@ -104,11 +106,23 @@ class DNode(ABC):
         Save Node content
         """
 
-    @abstractmethod
     def _format_build_params(self) -> str:
         """
         Format build parameters in a string and return it
         """
+
+        if len(self.children) > 0:
+            return ""
+
+        return_string = "\n"
+
+        size = [len(val) for val in self._build_params.keys()]
+        size = max(size)
+
+        for key in self._build_params.keys():
+            return_string += f"\t{key}{' '*(size-len(key))} :\t{self._build_params[key]}\n"
+
+        return return_string
 
     @property
     def name(self) -> str:
@@ -143,7 +157,7 @@ class DNode(ABC):
         self.__path = new_path if new_path != "" else self.__path
 
     @property
-    def build_params(self) -> str:
+    def build_params(self) -> dict:
         """
         Returns the build params text
         """
@@ -157,11 +171,11 @@ class DNode(ABC):
         self._build_params = value if value != "" else "NA"
 
     def __str__(self):
-        build_params = self._format_build_params()
+
         return ("\n"
                 f"Name: {self.__name}\n"
                 f"Type: {self.__type.name}\n "
-                f"Build:\n\t{build_params}\n"
+                f"Build:{self._format_build_params()}\n"
                 f"Path: {self.__path}"
                 "\n")
 
@@ -206,9 +220,6 @@ class DRNode(DNode):
         # TODO: add logic
         pass
 
-    def _format_build_params(self) -> str:
-        # TODO: add logic
-        pass
 
 
 class DFNode(DNode):
@@ -219,9 +230,7 @@ class DFNode(DNode):
     def load_content(self):
         path_content = super().load_content()
 
-        if not ("content.io" in path_content):
-            # TODO: Log error
-            pass
+        self.content = getattr(self.father.content, self.name)
 
         # TODO: save content
 
@@ -239,10 +248,6 @@ class DFNode(DNode):
         pass
 
     def save_content(self):
-        # TODO: add logic
-        pass
-
-    def _format_build_params(self) -> str:
         # TODO: add logic
         pass
 
@@ -266,10 +271,6 @@ class DISNode(DNode):
         pass
 
     def save_content(self):
-        # TODO: add logic
-        pass
-
-    def _format_build_params(self) -> str:
         # TODO: add logic
         pass
 
@@ -297,10 +298,6 @@ class DOSNode(DNode):
         # TODO: add logic
         pass
 
-    def _format_build_params(self) -> str:
-        # TODO: add logic
-        pass
-
 
 class DASNode(DNode):
 
@@ -324,10 +321,6 @@ class DASNode(DNode):
         # TODO: add logic
         pass
 
-    def _format_build_params(self) -> str:
-        # TODO: add logic
-        pass
-
 
 class DPNode(DNode):
 
@@ -348,10 +341,6 @@ class DPNode(DNode):
         pass
 
     def save_content(self):
-        # TODO: add logic
-        pass
-
-    def _format_build_params(self) -> str:
         # TODO: add logic
         pass
 
@@ -380,7 +369,6 @@ class NodeFactory:
         """
         Return class reference of a node type specified by node_type
         """
-
         # get node type
         node_type = DNodeTypes(dir_name.split("_")[0])
 
@@ -530,6 +518,10 @@ class DataCenter:
 
             # list of directories in current path
             add_list = [dr.name for dr in os.scandir(path) if dr.is_dir()]
+
+            # filter only n_ directories
+            add_list = [dr for dr in add_list if not dr.count("__") > 0]
+
             # add None element to switch tree level
             lst += add_list + [None]
             # add level to paths queue
@@ -610,8 +602,7 @@ class DataCenter:
         # add rich Tree node to current node path
         self.__r_dummy.children.append(Tree(node.dir_name))
 
-        # create node directory
-        # os.mkdir(node.path)
+        os.mkdir(node.path)
 
         node.generate_content()
 
@@ -625,7 +616,8 @@ class DataCenter:
 
 if __name__ == '__main__':
     a = DataCenter()
-    a.cd("f_cosx")
+    a.cd("f_sin")
     a.show()
+    # TODO: modify scan directory for only load n_type directories
 
     pass
