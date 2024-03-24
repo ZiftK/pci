@@ -1,21 +1,16 @@
+import importlib.util
+import json
+import os
 from abc import ABC, abstractmethod
-
-from rich.tree import Tree
-from rich import print as rprint
-
+from collections import deque
 from enum import Enum
 
-from collections import deque
-
-from pandas import DataFrame, read_csv
-
-import json
-
 from PIL import Image
+from pandas import read_csv
+from rich import print as rprint
+from rich.tree import Tree
 
-import importlib.util
-
-import os
+from testing.integralt import generate_data
 
 
 class DNodeTypes(Enum):
@@ -96,7 +91,6 @@ class DNode(ABC):
         """
         # write build params
         with open(self.path + "\\build_params.txt", "w") as file:
-            # TODO: I dont have any fuck idea that what happens
             file.write("")
             json.dump(self._build_params, file)
 
@@ -120,7 +114,7 @@ class DNode(ABC):
         size = max(size)
 
         for key in self._build_params.keys():
-            return_string += f"\t{key}{' '*(size-len(key))} :\t{self._build_params[key]}\n"
+            return_string += f"\t{key}{' ' * (size - len(key))} :\t{self._build_params[key]}\n"
 
         return return_string
 
@@ -221,7 +215,6 @@ class DRNode(DNode):
         pass
 
 
-
 class DFNode(DNode):
 
     def __init__(self, dir_name: str, node_type: DNodeTypes = DNodeTypes.ROOT, *args, **kwargs):
@@ -265,9 +258,33 @@ class DISNode(DNode):
             pass
         else:
             self.content = read_csv(f"{self.path}/content.csv")
+            print("Contenido cargadoooooooooooooooooooooo")
+            print(self.content)
 
     def generate_content(self):
-        # TODO: add logic
+
+        params = input("range [iv,fv,stp]> ")
+        params = params.replace("[", "").replace("]", "")
+        params = params.split(",")
+
+        print(params)
+        params = [float(val) for val in params]
+
+        df = generate_data(
+            self.father.content,
+            params[0],
+            params[1],
+            params[2]
+        )
+        # TODO: Finish implementations
+        df.to_csv(self.path + "/content.csv")
+
+        df.to_csv(self.path + "/content.csv")
+        self._build_params = self.father.build_params
+        self._build_params["left endpoint"] = params[0],
+        self._build_params["right endpoint"] = params[1],
+        self._build_params["step"] = params[2]
+
         pass
 
     def save_content(self):
@@ -563,6 +580,9 @@ class DataCenter:
         d_dummy = self.__d_tree
         r_dummy = self.__r_tree
 
+        if path[0] == self.__d_tree.dir_name:
+            return r_dummy, d_dummy
+
         # iterate through split path
         for dr in path:
 
@@ -616,8 +636,6 @@ class DataCenter:
 
 if __name__ == '__main__':
     a = DataCenter()
-    a.cd("f_sin")
     a.show()
-    # TODO: modify scan directory for only load n_type directories
 
     pass
